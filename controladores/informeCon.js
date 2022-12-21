@@ -237,12 +237,6 @@ const informesPost = async (req, res)=> {
          try {
          await Cliente.find({nombre:cliente}).then(
             cli => datosCliente = cli[0]);
-
-            
-               
-            
-     
-
             
          } catch (err) {
             console.log('error: ', err);
