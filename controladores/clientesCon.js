@@ -9,6 +9,7 @@ const Equipo = require('../modelos/equipos');
 
 const clientesGet = async(req, res=response) => {
     
+   
     try {
         const listaClientes = await Cliente.find({});
         return res.status(201). json({

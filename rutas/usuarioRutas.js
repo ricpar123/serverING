@@ -1,5 +1,4 @@
 const { Router } = require('express');
-
 const router = Router();
 
 const {
@@ -7,15 +6,17 @@ const {
     usuariosPut, usuariosDelete, usuariosListarCompleto
 } = require('../controladores/usuariosCon');
 
+const { validarAuth } = require('../midlewares/validarAuth');
 
-router.post('/reg', usuariosRegistro);
+
+router.post('/reg', validarAuth, usuariosRegistro);
 router.post('/log', usuariosLogin);
 
-router.get('/', usuariosListar);
+router.get('/', validarAuth ,usuariosListar);
 
 router.put('/', usuariosPut);
 router.delete('/:id', usuariosDelete);
-router.get('/tabla', usuariosListarCompleto);
+router.get('/tabla', validarAuth, usuariosListarCompleto);
 
 
 

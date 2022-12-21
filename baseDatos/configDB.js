@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const dbConn= async() => {
+const dbConn= async() =>  {
 
     try {
 

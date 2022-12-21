@@ -1,6 +1,7 @@
 const { response, request }  = require('express');
 const  Informe  = require('../modelos/informe');
 const Numero = require('../modelos/numero');
+const Cliente = require('../modelos/cliente');
 
 
 
@@ -185,19 +186,19 @@ const informesPost = async (req, res)=> {
    const id  = '6181b7ec919d2ecc2a19f4f1';
    //console.log(id);
 
-   const e0 = 'rcaballerobenitez458@gmail.com';//simula ingroup
+   const e0 = 'empresaingroup@gmail.com';//simula ingroup
    const e1 = 'carlos.andino71@hotmail.com';//simula santi
    
    try {
 
       const numeros =  await Numero.find({}, '-_id');
-   console.log(numeros[0].numero);
+   //console.log(numeros[0].numero);
 
    
     number = numeros[0].numero + 1;
-    console.log(number);
+   // console.log(number);
       
-      console.log('id: ', id);
+     // console.log('id: ', id);
       await Numero.findByIdAndUpdate(id, {$set:{numero: number}}, {new:true});
 
       
@@ -213,13 +214,53 @@ const informesPost = async (req, res)=> {
         });
       }
 
+  
+
+
+      //const body = req.body
+
       const {tecnico, cliente,descripcion, marca, modelo , serie, motivo, 
          tipoTrabajo, presupuesto, fechaInicio, horaInicio,
          fechaFin, horaFin, horasNormales, horasLab, 
          horasViaje, horasTotales, servicio, obs, recibido,
-         ci, firma, fecha, email1, email2, email3, email4}= req.body;
+         ci, firma, firmaT, fecha}= req.body;
 
-         console.log('Inicio y Termino: ', fechaInicio, fechaFin);
+      let email1 = '';
+      let email2 = '';
+      let email3 = '';
+      let email4 = '';
+       
+
+         console.log('cliente: ', cliente);
+         let datosCliente = [];
+
+         try {
+         await Cliente.find({nombre:cliente}).then(
+            cli => datosCliente = cli[0]);
+
+            
+               
+            
+     
+
+            
+         } catch (err) {
+            console.log('error: ', err);
+            
+         }
+
+     // console.log('datos del cliente: ', datosCliente);
+      email1 = datosCliente.email1;
+      email2 = datosCliente.email2;
+      email3 = datosCliente.email3;
+      email4 = datosCliente.email4;
+     
+      
+        
+
+       
+        // console.log('Inicio y Termino: ', fechaInicio, fechaFin);
+        // console.log('Tecnico: ', firmaT);
          const Inifecha = dayjs(fechaInicio).format("DD MMM YYYY");
          const Finf = dayjs(fechaFin).format("DD MMM YYYY");
      
@@ -229,14 +270,9 @@ const informesPost = async (req, res)=> {
          //console.log(fech);
          let tec = tecnico.toString();
          //console.log("tecnicos: ", tec);
-            
-     
-    
-    
-    
-    
-    
-    doc.moveTo(0, 20)
+      
+        
+     doc.moveTo(0, 20)
        .rect(14, 6, 571, 114)//ingroup, informe y numero
        
        .rect(251, 6, 334, 114)//divisoria ing, inf y nro
@@ -284,7 +320,7 @@ const informesPost = async (req, res)=> {
        })
        .fontSize(10)
        .font('Courier-Oblique')
-       .text('e-mail: santiagomanuellopez@hotmail.com', 14, 84, {
+       .text('e-mail: empresaingroup@gmail.com', 14, 84, {
           width: 240,
           align: 'center'
        })
@@ -524,7 +560,8 @@ const informesPost = async (req, res)=> {
           width: 600,
           align: 'left'
        })
-      //Servicio Realizado
+   
+       //Servicio Realizado
     
       .moveTo(14, 370)
       .rect(14, 370, 571, 25)
@@ -603,30 +640,50 @@ const informesPost = async (req, res)=> {
        //Firma..... Fecha de elaboracion
     
        .moveTo(14, 685)
+       
        .rect(14, 685, 571, 130)
+       
+       .rect(14,685, 571, 25)
+
+       .moveTo(300, 685)
+       .lineTo(300, 815)
        .fontSize(15)
        .font('Courier-Bold')
-       .text('Firma del cliente ', 18, 700, {
+       .text('Firma del cliente ', 18, 695, {
           width: 580,
           align: 'left'
        })
        
-       .image(Buffer.from(firma.replace('data:image/png;base64,',''), 'base64'), 25, 720, {fit: [100, 100]})
+       .image(Buffer.from(firma.replace('data:image/png;base64,',''), 'base64'), 50, 720, {fit: [100, 100]})
     
-    
+      
+
        .fontSize(15)
        .font('Courier-Bold')
-       .text('Fecha de elaboracion ', 370, 700, {
+       .text('Fecha:', 370, 695, {
           width: 580,
           align: 'left'
        })
        .fontSize(10)
        .font('Courier')
-       .text(`${fech}`,  420, 730, {
-          width: 600,
+       .text(`${fech}`,  450, 695, {
+         
+         width: 600,
           align: 'left'
        })
-    
+
+       
+       .fontSize(15)
+       .font('Courier-Bold')
+      
+       .text('Firma del Tecnico', 370,715,{
+        
+         width: 200,
+         align: 'left'
+       })
+       
+
+       .image(Buffer.from(firmaT.replace('data:image/png;base64,',''), 'base64'),370, 730, {fit: [100, 100]})
        
        .stroke();
         
@@ -653,11 +710,14 @@ const informesPost = async (req, res)=> {
       });
 
       var destino = e0;
-      if(tipoTrabajo == 'a facturar' || presupuesto == 'si'){
+      if(tipoTrabajo == 'aFacturar' || presupuesto == 'si'){
          destino = destino + ',' + e1;
       }
 
+
+      if(email1 != ''){
       destino = destino + ','+ email1;
+      }
       if(email2 != ''){
          destino = destino + ',' + email2;
       }
@@ -704,7 +764,7 @@ const informesPost = async (req, res)=> {
             motivo, tipoTrabajo, presupuesto, fechaInicio,
             horaInicio, fechaFin, horaFin, horasNormales,
             horasLab, horasViaje, horasTotales, servicio,
-            obs, recibido, ci, firma, fecha });
+            obs, recibido, ci, firma, firmaT,  fecha });
 
          
          
@@ -728,7 +788,7 @@ const informesPost = async (req, res)=> {
         });
       }
 
-   }
+}
      
        
 

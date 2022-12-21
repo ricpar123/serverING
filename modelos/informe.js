@@ -28,6 +28,7 @@ const informeSch = Schema({
     recibido: {type : String},
     ci: {type : String},
     firma: {type : String },
+    firmaT: {type : String },
     fecha: {type : Date }
 
 

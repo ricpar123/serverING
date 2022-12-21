@@ -2,6 +2,8 @@
 
 const { Router } = require('express');
 
+const { validarAuth } = require('../midlewares/validarAuth');
+
 
 
 
@@ -15,7 +17,7 @@ const { clientesGet,
 
 const rutas = Router();
 
-rutas.get('/', clientesGet);
+rutas.get('/', validarAuth, clientesGet);
 
 
 
