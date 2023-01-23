@@ -218,6 +218,8 @@ const informesPost = async (req, res)=> {
 
 
       //const body = req.body
+      
+      console.log('body del post: ', req.body);
 
       const {tecnico, cliente,descripcion, marca, modelo , serie, motivo, 
          tipoTrabajo, presupuesto, fechaInicio, horaInicio,

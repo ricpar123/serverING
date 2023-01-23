@@ -9,14 +9,14 @@ const {
 const { validarAuth } = require('../midlewares/validarAuth');
 
 
-router.post('/reg', validarAuth, usuariosRegistro);
+router.post('/reg', usuariosRegistro);
 router.post('/log', usuariosLogin);
 
-router.get('/', validarAuth ,usuariosListar);
+router.get('/', usuariosListar);
 
 router.put('/', usuariosPut);
 router.delete('/:id', usuariosDelete);
-router.get('/tabla', validarAuth, usuariosListarCompleto);
+router.get('/tabla', usuariosListarCompleto);
 
 
 
