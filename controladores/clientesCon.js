@@ -4,7 +4,6 @@ const { response, request } = require('express');
 
 
 const Cliente = require('../modelos/cliente');
-const Equipo = require('../modelos/equipos');
 
 
 const clientesGet = async(req, res=response) => {
@@ -78,28 +77,33 @@ const clientesPost = async (req, res = response) => {
     });
 }
 
- const clientesDelete = (req, res) => {
-   const {id, nombre} = req.body;
-   console.log('id: ', id);
-   console.log('nombre: ', nombre);
+ const clientesDelete = async(req, res) => {
+   const { id } = req.params;
+   console.log('id usuario: ', id);
+  
 
-  Promise.all([
-     Cliente.findByIdAndDelete(id),
-     Equipo.deleteMany({cliente:nombre})
-  ])
-  .then(resultados => {
-     const [cliente, equipos] = resultados;
+  
+   try {
+      
+    const cliente = await Cliente.findByIdAndDelete( id );
 
-     console.log('cliente', cliente);
-     console.log('equipos', equipos);
-  }).catch(err => {
-     console.log('error algo salio mal', err);
-  });
+   
 
-  res.json({
-     msg:'Todo bien'
-  });
-    
+    return res.status(201). json({
+        ok: true,
+      msg:'cliente eliminado' 
+      
+    });
+
+} catch (error) {
+    console.log('error en la eliminacion');
+    return res.status(500).json({
+        ok: false,
+        msg: 'Error en la eliminacion'
+    });
+}
+
+
 }
 
 

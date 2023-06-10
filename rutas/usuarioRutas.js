@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const router = Router();
 
+
 const {
     usuariosRegistro, usuariosListar, usuariosLogin,
     usuariosPut, usuariosDelete, usuariosListarCompleto

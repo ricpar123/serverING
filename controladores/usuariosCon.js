@@ -48,6 +48,8 @@ const usuariosListar = async (req, res = response) => {
     try {
       
         const usuarios = await Usuario.find({}, {userid:1} );
+        
+       
 
        
 
@@ -139,6 +141,7 @@ const usuariosPut = async (req, res) => {
     const {_id, userid, clave, rol} = req.body;
 
     console.log('datos: ', req.body);
+    console.log('datos 1', _id, userid, clave, rol);
     
 
     const dbEquipo = await Usuario.findByIdAndUpdate(_id, {userid, clave, rol }, {new: true});
