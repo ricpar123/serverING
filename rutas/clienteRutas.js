@@ -28,7 +28,7 @@ rutas.post('/', clientesPost);
  rutas.put('/', clientesPut);
 
 
- rutas.delete('/', clientesDelete); 
+ rutas.delete('/:id', clientesDelete); 
 
  
 
