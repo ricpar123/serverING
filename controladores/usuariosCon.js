@@ -49,14 +49,8 @@ const usuariosListar = async (req, res = response) => {
       
         const usuarios = await Usuario.find({}, {userid:1} );
         
-       
-
-       
-
-        return res.status(201). json({
-            ok: true,
-           
-          usuarios
+        return res.status(200). json({
+            usuarios
         });
 
     } catch (error) {
@@ -106,14 +100,14 @@ const usuariosLogin = async (req, res = response) => {
 
             return res.status(400).json({
                 ok: false,
-                msg:'UsuarioId/Clave no son correctos - userid'
+                msg:'Usuario no existe'
             });
             
         }
-        if(!(clave === usuario.clave)){
+        if((clave != usuario.clave && usuario.status != 'activo' )){
             return res.status(400).json({
                 ok: false,
-                msg:'UsuarioId/Clave no son correctos - clave'
+                msg:'Clave/status no son correctos'
             }); 
         }
       res.json({
