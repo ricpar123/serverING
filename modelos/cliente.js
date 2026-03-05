@@ -14,4 +14,4 @@ const clienteSch = Schema({
 
 });
 
-module.exports = model('Cliente', clienteSch);
+module.exports = model('cliente', clienteSch);

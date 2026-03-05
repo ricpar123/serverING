@@ -5,7 +5,7 @@ const  Usuario  = require('../modelos/usuario');
 
 const usuariosRegistro = async (req, res = response) => {
     
-    const { userid, clave, rol} = req.body;
+    const { userid, clave, rol } = req.body;
 
     console.log(userid, clave, rol);
  

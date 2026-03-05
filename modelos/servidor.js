@@ -16,6 +16,7 @@ class Server {
         this.numerosPath = '/numeros',
         this.equiposPath = '/equipos',
         this.informesPath = '/informes'
+        this.calibracionPath = '/calibraciones';
      
         
        
@@ -49,6 +50,7 @@ class Server {
      this.app.use(this.numerosPath, require('../rutas/numeroRutas'));
      this.app.use(this.equiposPath, require('../rutas/equipoRutas'));
      this.app.use(this.informesPath, require('../rutas/informeRutas'));
+     this.app.use(this.calibracionPath, require('../rutas/calibracionRutas'));
      
 
     }
