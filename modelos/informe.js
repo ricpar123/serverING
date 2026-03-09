@@ -13,23 +13,18 @@ const informeSch = Schema({
     motivo: {type : String},
     tipoTrabajo: {type : String},
     presupuesto: {type : String},
-    inicio: [''],
-    fechaInicio: {type : String},
+   fechaInicio: {type : String},
     horaInicio: {type : String},
-    termino: [''],
     fechaFin:{type : String},
     horaFin: {type : String},
-    horasNormales: {type : String},
-    horasLab: {type : String},
-    horasViaje: {type : String},
-    horasTotales: {type : String},
     servicio: {type : String},
     obs: {type : String},
     recibido: {type : String},
-    ci: {type : String},
     firma: {type : String },
     firmaT: {type : String },
-    fecha: {type : Date }
+    fecha: {type : Date },
+    status: {type : String },
+    repuestos: {type : String },
 
 
 

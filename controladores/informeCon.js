@@ -143,6 +143,48 @@ const informesGetDatos = async(req, res = response) =>{
 }
 
 
+  
+   const obtenerInformePorId = async (req, res) => {
+      try {
+         const { id } = req.params;
+
+         console.log("GET INFORME POR ID:", id);
+
+         if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+               ok: false,
+               error: "ID inválido"
+            });
+         }
+
+         const informe = await Informe.findById(id).lean();
+
+         if (!informe) {
+            return res.status(404).json({
+               ok: false,
+               error: "Informe no encontrado"
+            });
+         }
+
+         console.log("Informe obtenido:", informe);
+
+            return res.json({
+               ok: true,
+               informe
+            });
+
+      } catch (error) {
+            console.error("Error en obtenerInformePorId:", error);
+               return res.status(500).json({
+                  ok: false,
+                  error: error.message
+               });
+         }
+};
+
+
+
+
 const informesPut = async (req, res) => {
     
     
@@ -335,6 +377,6 @@ const informesPost = async (req, res)=> {
 module.exports = {
    informesGet, informesPost,
    informesGetDatos, informesDelete,
-   informesPut
+   informesPut, obtenerInformePorId
 }
 
