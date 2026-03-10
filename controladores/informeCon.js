@@ -54,7 +54,9 @@ const informesGet = async (req, res = response) =>{
 
     try {
       
-        const informes = await Informe.find({});
+        const informes = await Informe.find({}, {
+         cliente: 1, numeroInforme: 1, fecha: 1, 
+        });
 
        
 
