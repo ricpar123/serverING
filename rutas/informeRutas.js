@@ -4,7 +4,7 @@ const router = Router();
 
 const {
     informesGet, informesPost,
-    informesGetDatos, informesDelete, informesPut
+    informesGetDatos, informesDelete, informesPut, obtenerInformePorId
 } = require('../controladores/informeCon');
 
 const { validarAuth } = require('../midlewares/validarAuth');
