@@ -12,7 +12,7 @@ const { validarAuth } = require('../midlewares/validarAuth');
 const  upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/', validarAuth, informesGet);
-router.get('/:id', obtenerInformesPorId);
+router.get('/:id', obtenerInformePorId);
 router.get('/inicio/:inicio/fin/:fin/cliente/:cliente', informesGetDatos);
 router.delete('/:id', informesDelete);
 router.put('/', informesPut);
