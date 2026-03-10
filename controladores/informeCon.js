@@ -1,5 +1,6 @@
 const { response, request }  = require('express');
 const  Informe  = require('../modelos/informe');
+const mongoose = require("mongoose");
 const multer = require('multer');
 const express = require('express');
 const  cloudinary  = require('cloudinary').v2;
