@@ -3,7 +3,7 @@ const multer = require('multer');
 const router = Router();
 
 const {
-    informesGet, informesPost,
+    informesGet, crearInforme,
     informesGetDatos, informesDelete, informesPut, obtenerInformePorId
 } = require('../controladores/informeCon');
 
@@ -19,13 +19,8 @@ router.put('/', informesPut);
 
 
 
-router.post('/',
-    upload.fields ([
-        { name: 'fotosAntes', maxCount: 3 },
-        { name: 'fotosDespues', maxCount: 3 },        
-    ]),
-    informesPost
- );
+router.post('/informe', crearInforme);
+ 
 
  
 

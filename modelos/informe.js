@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 
 
 
-const informeSch = Schema({
+const informeSch = new Schema({
     numero: {type : Number},
     cliente: {type : String },
     tecnico: {type : String},
@@ -17,6 +17,7 @@ const informeSch = Schema({
     horaInicio: {type : String},
     fechaFin:{type : String},
     horaFin: {type : String},
+    diasT: { type: String},
     servicio: {type : String},
     obs: {type : String},
     recibido: {type : String},
@@ -25,11 +26,10 @@ const informeSch = Schema({
     fecha: {type : Date },
     status: {type : String },
     repuestos: {type : String },
+    links: [String]
 
-
-
-     
-
+}, {
+    timestamps: true
 });
 
 module.exports = model('Informe', informeSch);

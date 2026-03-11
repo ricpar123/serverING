@@ -248,137 +248,57 @@ const informesDelete = async(req, res) => {
    
 }
 
-
-const informesPost = async (req, res)=> {
-
-  let fotosAntes = [];
-  let fotosDespues = [];
-  var numeroInforme = 0;
-  
-   const doc = new PDFDoc({size:'A4'});
-   doc.pipe(fs1.createWriteStream('informe.pdf'));
-
-  
-   const e0 = 'empresaingroup@gmail.com';//simula ingroup
-   const e1 = 'carlos.andino71@hotmail.com';//simula santi
-   
+const crearInforme = async (req, res) => {
    try {
-
-      numeroInforme =  await getNextInformeNumber();
-      console.log('nro del informe: ', numeroInforme);
-
-   } catch (error) {
-      console.log('error', error);
-        
-      }
-
-      //Obtener datos y fotos
-      //1) Datos: vienen en el req.body.data (string jason)
-      try {
-         const datos = req.body.data ? JSON.parse(req.body.data) : req.body;
-      //2) fotos: vienen en req.files
-          fotosAntes = req.files['fotosAntes'] || [];
-          fotosDespues = req.files['fotosDespues'] || [];
-
-         console.log('datos: ', datos);
-         console.log('fotos antes: ', fotosAntes.length);
-         console.log('fotos despues: ', fotosDespues.length);
-         console.log('ANTES', fotosAntes);
-         console.log('DESPUES', fotosDespues);
-         
-      
-      } catch (error) {
-         console.log('error', error);
-      } 
-
-      //Subir fotos a Cloudinary
-      console.log('Subiendo fotos a Cloudinary...');
-
-      try {
-           
-      const uploadPromisesAntes = fotosAntes.map((file, index) => {
-         return new Promise((resolve, reject) => {
-        // Crear nombre personalizado: tipo_numero_originalName_index
-        const customName = `ANTES_${numeroInforme}_${file.originalname.split('.')[0]}_${index}`;
-        console.log('CustomName:', customName);
-        const stream = cloudinary.uploader.upload_stream(
-          { 
-            folder: 'Ingroup/informes', 
-            public_id: customName, // AQUÍ SE RENAMEA
-            resource_type: 'auto' 
-          },
-          (error, result) => {
-            if (error) reject(error);
-            resolve(result.secure_url);
-          }
-        ).end(file.buffer);
-        
-     
-        
-      });
+   
+   const numero = await getNextInformeNumber();
+   const nuevoInforme = new Informe ({
+      numero,
+      cliente: req.body.cliente,
+      tecnico: req.body.tecnico,
+      equipo: req.body.equipo,
+      marca: req.body.marca,
+      modelo: req.body.modelo,
+      serie: req.body.serie,
+      motivo: req.body.motivo,
+      tipoTrabajo: req.body.tipoTrabajo,
+      diasT: req.body.diasT,
+      presupuesto: req.body.presupuesto,
+      fecha: req.body.fecha,
+      horaInicio: req.body.horaInicio,
+      horaFin: req.body.horaFin,
+      servicio: req.body.servicio,
+      obs: req.body.obs,
+      recibido: req.body.recibido,
+      firmaC: req.body.firmaC,
+      firmaT: req.body.firmaT,
+      status: req.body.status,
+      repuesto: req.body.repuesto,
+      links: []
     });
 
-    const results = await Promise.all(uploadPromisesAntes);
-    res.json({
+    await nuevoInforme.save();
+
+    return res.status(201).json({
       ok: true,
-      msg: 'Fotos ANTES subidas correctamente',
-      urls: results
+      msg: "Informe guardado correctamente",
+      informeId: nuevoInforme._id,
+      numero: nuevoInforme.numero
     });
-    
-   }  catch (error) {
-         res.status(500).json({
-           ok: false,
-           msg: 'Error al subir las fotos a Cloudinary',
-           error: error.message
-         });
-      }
-}
-      
-      
-      
-      
-      
-     /* 
-      const urlAntes = await uploadMany(fotosAntes, {numeroInforme, tipo:'ANTES'});
-         const urlDespues = await uploadMany(fotosDespues,  {numeroInforme, tipo: 'DESPUES'});
 
-         console.log('urlAntes', urlAntes);
-         console.log('urlDespues', urlDespues);
-      
-         //Guardar en Mongodb datos y urls de las fotos
-         //Elaborar PDF del informe
-
-
-         //enviar email al Cliente e Ingroup
+    } catch (error) {
+    console.error("Error crearInforme:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+};
    
-
-
-      }; 
-
-    */     
-        
-
-         
-
-
-      
-
-
-      
-
-
-     
-       
-
-      
-   
-
-
-
 
 
 module.exports = {
-   informesGet, informesPost,
+   informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId
 }
