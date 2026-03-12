@@ -275,7 +275,7 @@ const crearInforme = async (req, res) => {
       firma: req.body.firma,
       firmaT: req.body.firmaT,
       status: req.body.status,
-      repuesto: req.body.repuesto,
+      repuesto: req.body.repuestos,
       links: []
     });
 
