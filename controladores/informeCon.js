@@ -265,6 +265,7 @@ const crearInforme = async (req, res) => {
       tipoTrabajo: req.body.tipoTrabajo,
       diasT: req.body.diasT,
       presupuesto: req.body.presupuesto,
+      oferta: req.body.oferta,
       horaInicio: req.body.horaInicio,
       horaFin: req.body.horaFin,
       fechaInicio: req.body.fechaInicio,
@@ -275,7 +276,7 @@ const crearInforme = async (req, res) => {
       firma: req.body.firma,
       firmaT: req.body.firmaT,
       status: req.body.status,
-      repuesto: req.body.repuestos,
+      repuestos: req.body.repuestos,
       links: []
     });
 
