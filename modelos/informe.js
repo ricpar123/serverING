@@ -13,7 +13,8 @@ const informeSch = new Schema({
     motivo: {type : String},
     tipoTrabajo: {type : String},
     presupuesto: {type : String},
-   fechaInicio: {type : String},
+    oferta: {type: String},
+    fechaInicio: {type : String},
     horaInicio: {type : String},
     fechaFin:{type : String},
     horaFin: {type : String},
@@ -23,7 +24,6 @@ const informeSch = new Schema({
     recibido: {type : String},
     firma: {type : String },
     firmaT: {type : String },
-    fecha: {type : Date },
     status: {type : String },
     repuestos: {type : String },
     links: [String]
