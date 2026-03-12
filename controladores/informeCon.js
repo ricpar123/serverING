@@ -249,6 +249,7 @@ const informesDelete = async(req, res) => {
 }
 
 const crearInforme = async (req, res) => {
+   console.log("BODY RECIBIDO:", req.body);
    try {
    
    const numero = await getNextInformeNumber();
@@ -264,13 +265,14 @@ const crearInforme = async (req, res) => {
       tipoTrabajo: req.body.tipoTrabajo,
       diasT: req.body.diasT,
       presupuesto: req.body.presupuesto,
-      fecha: req.body.fecha,
       horaInicio: req.body.horaInicio,
       horaFin: req.body.horaFin,
+      fechaInicio: req.body.fechaInicio,
+      fechaFin : req.body.fechaFin,
       servicio: req.body.servicio,
       obs: req.body.obs,
       recibido: req.body.recibido,
-      firmaC: req.body.firmaC,
+      firma: req.body.firma,
       firmaT: req.body.firmaT,
       status: req.body.status,
       repuesto: req.body.repuesto,
