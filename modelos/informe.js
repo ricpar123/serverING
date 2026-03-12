@@ -6,7 +6,7 @@ const informeSch = new Schema({
     numero: {type : Number},
     cliente: {type : String },
     tecnico: {type : String},
-    descripcion: {type : String},
+    equipo: {type : String},
     marca: {type : String },
     modelo: {type : String},
     serie: {type : String},
