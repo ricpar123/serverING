@@ -250,6 +250,7 @@ const informesDelete = async(req, res) => {
 
 const crearInforme = async (req, res) => {
    console.log("BODY RECIBIDO:", req.body);
+   console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
    try {
    
    const numero = await getNextInformeNumber();
@@ -284,9 +285,10 @@ const crearInforme = async (req, res) => {
 
     return res.status(201).json({
       ok: true,
-      msg: "Informe guardado correctamente",
+      msg: "crearInforme V3 ejecutado",
       informeId: nuevoInforme._id,
-      numero: nuevoInforme.numero
+      numero: nuevoInforme.numero,
+      bodyRecibido: req.body
     });
 
     } catch (error) {
