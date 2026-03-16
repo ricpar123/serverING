@@ -56,10 +56,10 @@ const informesGet = async (req, res = response) =>{
     try {
       
         const informes = await Informe.find({}, {
-         cliente: 1, numeroInforme: 1, fecha: 1, 
+         cliente: 1, numero: 1, fechaFin: 1, 
         });
 
-       
+       console.log('informes:', informes);
 
         return res.status(201). json({
             ok: true,
