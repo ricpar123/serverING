@@ -257,7 +257,7 @@ const crearInforme = async (req, res) => {
    const nuevoInforme = new Informe ({
       numero,
       cliente: req.body.cliente,
-      tecnico: req.body.tecnico,
+      tecnicos: req.body.tecnicos,
       equipo: req.body.equipo,
       marca: req.body.marca,
       modelo: req.body.modelo,

@@ -5,7 +5,7 @@ const { Schema, model } = require('mongoose');
 const informeSch = new Schema({
     numero: {type : Number},
     cliente: {type : String },
-    tecnico: {type : String},
+    tecnicos: [{type : [String], default: [] }],
     equipo: {type : String},
     marca: {type : String },
     modelo: {type : String},
