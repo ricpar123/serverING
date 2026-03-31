@@ -5,7 +5,6 @@ const { response, request } = require('express');
 
 const Cliente = require('../modelos/cliente');
 
-
 const clientesGet = async(req, res=response) => {
     
    
@@ -30,7 +29,7 @@ const clientesGet = async(req, res=response) => {
 
 const clientesPost = async (req, res = response) => {
     
-    const { nombre, email1, email2, email3, email4 } = req.body;
+    const { nombre, email1, email2, email3, email4, status} = req.body;
    
     
     try {
@@ -43,7 +42,7 @@ const clientesPost = async (req, res = response) => {
             });
         }
       
-        const dbCliente  = new Cliente({nombre, email1, email2, email3, email4});
+        const dbCliente  = new Cliente({nombre, email1, email2, email3, email4, status});
        
 
         await dbCliente.save();
@@ -61,20 +60,52 @@ const clientesPost = async (req, res = response) => {
             msg: 'Por favor contacte con el administrador'
         });
     }
+
 }
+
+const clientesPutInactivar = async (req, res) => {
+    
+    
+
+    const {id, status} = req.body;
+
+    console.log('datos: ', req.body);
+    
+    
+
+    const dbCliente = await Cliente.findByIdAndUpdate(id, {status }, {new: true});
+    
+   
+    
+    res.json({
+        msg: 'put inactivar desde el controlador',
+        dbCliente
+        
+    });
+}
+
     
  const clientesPut = async (req, res) => {
     
-   const {_id, nombre, email1, email2, email3, email4} = req.body;
-
-   const dbCliente = await Cliente.findByIdAndUpdate(_id, {email1:email1, email2:email2, email3:email3, email4:email4}, {new: true});
-  
-    
-    res.json({
-        msg: 'put desde el controlador',
-        
-        dbCliente
-    });
+   const {id} = req.params;
+       console.log("id del cliente: ", id);
+       
+   
+       const {nombre, email1, email2, email3, email4, status} = req.body;
+   
+       console.log('datos: ', req.body);
+      
+       
+   
+       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, email1, email2, email3, email4, status }, {new: true});
+       
+      
+       
+       res.json({
+           msg: 'put desde el controlador',
+           dbCliente
+           
+       });
 }
 
  const clientesDelete = async(req, res) => {
@@ -115,9 +146,9 @@ const clientesPost = async (req, res = response) => {
 
 module.exports = {
     clientesGet,
-    
     clientesPost,
-    clientesPut, 
+    clientesPut,
+    clientesPutInactivar, 
     clientesDelete
     
    

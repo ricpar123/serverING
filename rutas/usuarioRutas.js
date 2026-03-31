@@ -4,7 +4,7 @@ const router = Router();
 
 const {
     usuariosRegistro, usuariosListar, usuariosLogin,
-    usuariosPut, usuariosDelete, usuariosListarCompleto
+    usuariosPut, usuariosDelete, usuariosListarCompleto, usuariosPutInactivar
 } = require('../controladores/usuariosCon');
 
 const { validarAuth } = require('../midlewares/validarAuth');
@@ -15,7 +15,8 @@ router.post('/log', usuariosLogin);
 
 router.get('/', usuariosListar);
 
-router.put('/', usuariosPut);
+router.put('/:id', usuariosPut);
+router.put('/:id/inactivar', usuariosPutInactivar);
 router.delete('/:id', usuariosDelete);
 router.get('/tabla', usuariosListarCompleto);
 

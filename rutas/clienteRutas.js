@@ -11,7 +11,8 @@ const { clientesGet,
        
         clientesPut,
         clientesPost,
-        clientesDelete
+        clientesDelete,
+        clientesPutInactivar
         
          } = require('../controladores/clientesCon');
 
@@ -25,21 +26,13 @@ rutas.get('/', validarAuth, clientesGet);
 rutas.post('/', clientesPost);
 
 
- rutas.put('/', clientesPut);
+ rutas.put('/:id', clientesPut);
+
+ rutas.put('/:id/inactivar', clientesPutInactivar);
 
 
  rutas.delete('/:id', clientesDelete); 
 
  
-
- 
-
-
-
-
-
-
-
-
 
 module.exports= rutas;

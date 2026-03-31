@@ -4,7 +4,8 @@ const router = Router();
 
 const {
     informesGet, crearInforme,
-    informesGetDatos, informesDelete, informesPut, obtenerInformePorId
+    informesGetDatos, informesDelete, informesPut, obtenerInformePorId,
+    subirImagenesInforme
 } = require('../controladores/informeCon');
 
 const { validarAuth } = require('../midlewares/validarAuth');
@@ -20,6 +21,13 @@ router.put('/', informesPut);
 
 
 router.post('/informe', crearInforme);
+router.post("/informe/:id/imagenes",
+    upload.fields([
+        { name: "fotoAntes", maxCount: 3},
+        { name: "fotoDespues", maxCount: 3}
+    ]),
+    subirImagenesInforme
+ );
  
 
  

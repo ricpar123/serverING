@@ -5,9 +5,9 @@ const  Usuario  = require('../modelos/usuario');
 
 const usuariosRegistro = async (req, res = response) => {
     
-    const { userid, clave, rol } = req.body;
+    const { userid, clave, rol, status } = req.body;
 
-    console.log(userid, clave, rol);
+    console.log(userid, clave, rol, status);
  
     
     try {
@@ -20,7 +20,7 @@ const usuariosRegistro = async (req, res = response) => {
             });
         }
       
-        const dbUsuario  = new Usuario({userid, clave, rol});
+        const dbUsuario  = new Usuario({userid, clave, rol, status});
        
 
         await dbUsuario.save();
@@ -130,20 +130,44 @@ const usuariosLogin = async (req, res = response) => {
 
 const usuariosPut = async (req, res) => {
     
+    const {id} = req.params;
+    console.log("id del usuario: ", id);
     
 
-    const {_id, userid, clave, rol} = req.body;
+    const {userid, clave, rol, status} = req.body;
 
     console.log('datos: ', req.body);
-    console.log('datos 1', _id, userid, clave, rol);
+   
     
 
-    const dbEquipo = await Usuario.findByIdAndUpdate(_id, {userid, clave, rol }, {new: true});
+    const dbUsuario = await Usuario.findByIdAndUpdate(id, {userid, clave, rol, status }, {new: true});
     
    
     
     res.json({
         msg: 'put desde el controlador',
+        dbUsuario
+        
+    });
+    
+}
+
+const usuariosPutInactivar = async (req, res) => {
+    
+    
+
+    const {id, status} = req.body;
+
+    console.log('datos: ', req.body);
+    
+    
+
+    const dbEquipo = await Usuario.findByIdAndUpdate(id, {status }, {new: true});
+    
+   
+    
+    res.json({
+        msg: 'put inactivar desde el controlador',
         dbEquipo
         
     });
@@ -187,5 +211,6 @@ module.exports = {
     usuariosListar,
     usuariosDelete,
     usuariosListarCompleto,
-    usuariosPut
+    usuariosPut,
+    usuariosPutInactivar
 }

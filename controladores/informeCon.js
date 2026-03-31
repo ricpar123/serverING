@@ -7,7 +7,7 @@ const  cloudinary  = require('cloudinary').v2;
 const Numero = require('../modelos/numero');
 const Cliente = require('../modelos/cliente');
 const { getNextInformeNumber } = require('../helpers/numero');
-const { uploadMany } = require('../helpers/uploadCloudinary');
+const { subirBufferACloudinary } = require('../helpers/uploadCloudinary');
 const bodyParser = require('body-parser');
 const app = express();
 require('dotenv').config();
@@ -299,12 +299,81 @@ const crearInforme = async (req, res) => {
     });
   }
 };
+
+const subirImagenesInforme = async (req, res) => {
+   try {
+     const { id } = req.params;
+     
+     if(!mongoose.Types.ObjectId.isValid(id)){
+      return res.status(400).json({
+         ok: false,
+         error: "ID invalido"
+      });
+     }
+     const informe = await Informe.findById(id);
+     if(!informe){
+      return res.status(404).json({
+         ok: false,
+         error: "Informe no encontrado"
+      });
+     }
+     const archivos = [];
+     const links = [];
+
+     if (req.files?.fotoAntes) {
+      archivos.push(...req.files.fotoAntes.map(f => ({ ...f, tipo: "fotoAntes" })));
+    }
+
+    if (req.files?.fotoDespues) {
+      archivos.push(...req.files.fotoDespues.map(f => ({ ...f, tipo: "fotoDespues" })));
+    }
+
+    if (!archivos.length) {
+      return res.json({
+        ok: true,
+        msg: "No se recibieron imágenes",
+        links: []
+      });
+    }
+
+    for (let i = 0; i < archivos.length; i++) {
+      const archivo = archivos[i];
+
+      const resultado = await subirBufferACloudinary(
+        archivo.buffer,
+        "informes_servicio",
+        `IS_${informe.numero}_${archivo.tipo}_${i}`
+      );
+
+      links.push(resultado.secure_url);
+    }
+
+    informe.links = [...(informe.links || []), ...links];
+    await informe.save();
+
+    return res.json({
+      ok: true,
+      msg: "Imágenes subidas correctamente",
+      links: informe.links
+    });
+
+   } catch (error) {
+      console.error("Error subirImagenesInforme:", error);
+      return res.status(500).json({
+         ok: false,
+         error: error.message
+      });
+      
+   }
+};
+
    
 
 
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
-   informesPut, obtenerInformePorId
+   informesPut, obtenerInformePorId,
+   subirImagenesInforme
 }
 

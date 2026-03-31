@@ -7,7 +7,8 @@ const clienteSch = Schema({
      email1: {type : String},
      email2: {type : String},
      email3: {type : String},
-     email4: {type : String}
+     email4: {type : String},
+     status: {type : String}
      
 
      
