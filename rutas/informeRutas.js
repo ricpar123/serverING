@@ -22,11 +22,14 @@ router.put('/', informesPut);
 
 router.post('/informe', crearInforme);
 router.post("/informe/:id/imagenes",
+     
     upload.fields([
         { name: "fotoAntes", maxCount: 3},
         { name: "fotoDespues", maxCount: 3}
     ]),
+    
     subirImagenesInforme
+   
  );
  
 

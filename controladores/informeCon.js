@@ -301,6 +301,7 @@ const crearInforme = async (req, res) => {
 };
 
 const subirImagenesInforme = async (req, res) => {
+   console.log("Estoy en subirImagenes");
    try {
      const { id } = req.params;
      
@@ -338,12 +339,15 @@ const subirImagenesInforme = async (req, res) => {
 
     for (let i = 0; i < archivos.length; i++) {
       const archivo = archivos[i];
+      console.log("archivo recibido:", archivo);
 
       const resultado = await subirBufferACloudinary(
         archivo.buffer,
         "informes_servicio",
         `IS_${informe.numero}_${archivo.tipo}_${i}`
       );
+
+      console.log("resultado de subirImagenes:", resultado);
 
       links.push(resultado.secure_url);
     }
