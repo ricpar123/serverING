@@ -1,6 +1,6 @@
 
 
-const cloudinary = require("cloudinary");
+const cloudinary = require("cloudinary").v2;
 
 
 

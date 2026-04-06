@@ -26,6 +26,7 @@ const PDFDoc = require('pdfkit');
 const path = require('path');
 const { resolve } = require('dns');
 const { rejects } = require('assert');
+const { publicDecrypt } = require('crypto');
 
 
 let number = 0;
@@ -304,6 +305,8 @@ const subirImagenesInforme = async (req, res) => {
    console.log("Estoy en subirImagenes");
    try {
      const { id } = req.params;
+
+     console.log("📸 subirImagenesInforme ID:", id);
      
      if(!mongoose.Types.ObjectId.isValid(id)){
       return res.status(400).json({
@@ -318,62 +321,61 @@ const subirImagenesInforme = async (req, res) => {
          error: "Informe no encontrado"
       });
      }
-     const archivos = [];
-     const links = [];
+     const archivoAntes = req.files?.fotoAntes || [];
+     const archivoDespues = req.files?.fotoDespues || [];
 
-     if (req.files?.fotoAntes) {
-      archivos.push(...req.files.fotoAntes.map(f => ({ ...f, tipo: "fotoAntes" })));
-    }
+     const todosLosArchivos = [
+      ...archivoAntes.map((fila,i) => ({
+         file,
+         tipo: "antes",
+         index: 1
+      })),
+      ...archivoDespues.map((file, i) => ({
+         file,
+         tipo: "despues",
+         index: 1
+      }))
+     ];
 
-    if (req.files?.fotoDespues) {
-      archivos.push(...req.files.fotoDespues.map(f => ({ ...f, tipo: "fotoDespues" })));
-    }
-
-    if (!archivos.length) {
-      return res.json({
-        ok: true,
-        msg: "No se recibieron imágenes",
-        links: []
+     if(todosLosArchivos.length === 0 ) {
+      return res.status(400).json({
+         ok: false,
+         error: "No se recibieron imagenes"
       });
-    }
+     }
 
-    for (let i = 0; i < archivos.length; i++) {
-      const archivo = archivos[i];
-      console.log("archivo recibido:", archivo);
+     const nuevosLinks = [];
+     for( const item of todosLosArchivos) {
+      const { file, tipo, index } = item;
+      const publicId = `IS_${informe.numero}_${tipo}_${Date.now()}_${index + 1}`;
 
       const resultado = await subirBufferACloudinary(
-        archivo.buffer,
-        "informes_servicio",
-        `IS_${informe.numero}_${archivo.tipo}_${i}`
+         file.buffer,
+         "informes_servicio",
+         publicId
       );
+      nuevosLinks.push(resultado.secure_url);
+     }
+     informe.links = [...(informe.links || [] ), ...nuevosLinks];
+     await informe.save();
 
-      console.log("resultado de subirImagenes:", resultado);
-
-      links.push(resultado.secure_url);
-    }
-
-    informe.links = [...(informe.links || []), ...links];
-    await informe.save();
-
-    return res.json({
+     return res.json({
       ok: true,
       msg: "Imágenes subidas correctamente",
-      links: informe.links
+      links: informe.links,
+      nuevosLinks
     });
-
-   } catch (error) {
+   } catch (error){
       console.error("Error subirImagenesInforme:", error);
       return res.status(500).json({
          ok: false,
          error: error.message
       });
-      
    }
 };
+     
 
-   
-
-
+    
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,

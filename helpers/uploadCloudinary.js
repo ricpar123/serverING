@@ -1,11 +1,11 @@
 const streamifier = require("streamifier");
 const cloudinary = require("./cloudinary");
 
-function subirBufferACloudinary(buffer, {folder, publicId}) {
+function subirBufferACloudinary(buffer, folder, publicId) {
   console.log("Estoy en subirBufferCloudinary");
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder, public_id: publicId, resource_type: "image", overwrite: true },
+      { folder, public_id: publicId, resource_type: "image" },
       (err, result) => (err ? reject(err) : resolve(result))
     );
     streamifier.createReadStream(buffer).pipe(stream);

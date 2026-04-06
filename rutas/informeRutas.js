@@ -1,6 +1,8 @@
 const { Router } = require('express');
-const multer = require('multer');
+
+const upload = require("../midlewares/upload");
 const router = Router();
+
 
 const {
     informesGet, crearInforme,
@@ -10,7 +12,7 @@ const {
 
 const { validarAuth } = require('../midlewares/validarAuth');
 
-const  upload = multer({ storage: multer.memoryStorage() });
+
 
 router.get('/', validarAuth, informesGet);
 router.get('/:id', obtenerInformePorId);
