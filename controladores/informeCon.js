@@ -325,7 +325,7 @@ const subirImagenesInforme = async (req, res) => {
      const archivoDespues = req.files?.fotoDespues || [];
 
      const todosLosArchivos = [
-      ...archivoAntes.map((fila,i) => ({
+      ...archivoAntes.map((file,i) => ({
          file,
          tipo: "antes",
          index: 1
