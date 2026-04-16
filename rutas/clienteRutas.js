@@ -8,18 +8,17 @@ const { validarAuth } = require('../midlewares/validarAuth');
 
 
 const { clientesGet,
-       
+        clienteGetporNombre,
         clientesPut,
         clientesPost,
-        clientesDelete,
         clientesPutInactivar
         
          } = require('../controladores/clientesCon');
 
 const rutas = Router();
 
-rutas.get('/', validarAuth, clientesGet);
-
+rutas.get('/', clientesGet);
+rutas.get('/:nombre', clienteGetporNombre );
 
 
 
@@ -31,7 +30,7 @@ rutas.post('/', clientesPost);
  rutas.put('/:id/inactivar', clientesPutInactivar);
 
 
- rutas.delete('/:id', clientesDelete); 
+
 
  
 

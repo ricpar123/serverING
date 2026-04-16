@@ -25,11 +25,35 @@ const clientesGet = async(req, res=response) => {
       }
 }
 
+const clienteGetporNombre = async(req, res=response) => {
+    
+    try {
+        const nombre = req.params.nombre;
+        console.log("Nombre:", nombre);
+        if(!nombre) return res.json({msg:"Nombre no encontrado"});
+        const cliente = await Cliente.findOne({nombre: nombre});
+        if(!cliente) return res.status(404).json({msg: "Cliente no encontrado"});
+        res.status(201). json({
+            ok: true,
+            cliente
+        });
+    
+      } catch (error) {
+        console.log('error:', error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Por favor contacte con el administrador'
+        });
+    
+      }
+}
+
+
 
 
 const clientesPost = async (req, res = response) => {
     
-    const { nombre, email1, email2, email3, email4, status} = req.body;
+    const { nombre, emails, status} = req.body;
    
     
     try {
@@ -42,7 +66,7 @@ const clientesPost = async (req, res = response) => {
             });
         }
       
-        const dbCliente  = new Cliente({nombre, email1, email2, email3, email4, status});
+        const dbCliente  = new Cliente({nombre, emails, status});
        
 
         await dbCliente.save();
@@ -91,13 +115,13 @@ const clientesPutInactivar = async (req, res) => {
        console.log("id del cliente: ", id);
        
    
-       const {nombre, email1, email2, email3, email4, status} = req.body;
+       const {nombre, emails, status} = req.body;
    
        console.log('datos: ', req.body);
       
        
    
-       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, email1, email2, email3, email4, status }, {new: true});
+       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, emails, status }, {new: true});
        
       
        
@@ -108,34 +132,9 @@ const clientesPutInactivar = async (req, res) => {
        });
 }
 
- const clientesDelete = async(req, res) => {
-   const { id } = req.params;
-   console.log('id usuario: ', id);
-  
-
-  
-   try {
-      
-    const cliente = await Cliente.findByIdAndDelete( id );
-
-   
-
-    return res.status(201). json({
-        ok: true,
-      msg:'cliente eliminado' 
-      
-    });
-
-} catch (error) {
-    console.log('error en la eliminacion');
-    return res.status(500).json({
-        ok: false,
-        msg: 'Error en la eliminacion'
-    });
-}
+ 
 
 
-}
 
 
 
@@ -146,11 +145,8 @@ const clientesPutInactivar = async (req, res) => {
 
 module.exports = {
     clientesGet,
+    clienteGetporNombre,
     clientesPost,
     clientesPut,
-    clientesPutInactivar, 
-    clientesDelete
-    
-   
-    
+    clientesPutInactivar
 }

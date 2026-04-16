@@ -10,8 +10,8 @@ const { getNextInformeNumber } = require('../helpers/numero');
 const { subirBufferACloudinary } = require('../helpers/uploadCloudinary');
 const bodyParser = require('body-parser');
 const app = express();
-require('dotenv').config();
-
+ 
+const { enviarMailConAdjunto } = require("../helpers/mailer");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,6 +27,8 @@ const path = require('path');
 const { resolve } = require('dns');
 const { rejects } = require('assert');
 const { publicDecrypt } = require('crypto');
+
+require('dotenv').config();
 
 
 let number = 0;
@@ -170,12 +172,10 @@ const informesGetDatos = async(req, res = response) =>{
             });
          }
 
-         console.log("Informe obtenido:", informe);
-
-            return res.json({
+         return res.json({
                ok: true,
                informe
-            });
+         });
 
       } catch (error) {
             console.error("Error en obtenerInformePorId:", error);
@@ -257,7 +257,8 @@ const crearInforme = async (req, res) => {
    const numero = await getNextInformeNumber();
    const nuevoInforme = new Informe ({
       numero,
-      cliente: req.body.cliente,
+      emails:req.body.emails,
+      cliente:req.body.cliente,
       tecnicos: req.body.tecnicos,
       equipo: req.body.equipo,
       marca: req.body.marca,
@@ -373,6 +374,35 @@ const subirImagenesInforme = async (req, res) => {
       });
    }
 };
+
+const enviarInformePorEmail = async (req, res) => {
+   try {
+      const { id } = req.params;
+      const { pdfBase64 } = req.body;
+
+      if(!mongoose.Types.ObjectId.isValid(id)) {
+         return res.status(400).json({
+            ok: false,
+            error: "ID invalido"
+         });
+      }
+      if (!pdfBase64) {
+         return res.status(400).json({
+            ok: false,
+            error: "falta pdfBase64"
+         });
+      }
+      const informe = await Informe.findById(id).lean();
+      if (!informe) {
+      return res.status(404).json({
+        ok: false,
+        error: "Informe no encontrado"
+      });
+    }
+   } catch (err) {
+      console.log("error en enviarInformePorEmail", err);
+   }
+}
      
 
     
