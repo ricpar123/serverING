@@ -27,7 +27,13 @@ const informeSch = new Schema({
     firmaT: {type : String },
     status: {type : String },
     repuestos: {type : String },
-    links: [String]
+    links: {type: [String],
+            default: []
+    },
+    rutaPdf: {
+        type: String,
+        default: ""
+    },
 
 }, {
     timestamps: true

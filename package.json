@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "dayjs": "^1.10.7",
     "dotenv": "^17.2.3",
+    "ejs": "^5.0.2",
     "express": "^4.17.1",
     "express-validator": "^6.10.1",
     "jspdf": "^4.0.0",
@@ -25,6 +26,7 @@
     "multer": "^2.1.1",
     "nodemailer": "^7.0.12",
     "pdfkit": "^0.12.3",
+    "puppeteer": "^24.42.0",
     "streamifier": "^0.1.1"
   }
 }

@@ -1,5 +1,7 @@
 const { response, request }  = require('express');
 const  Informe  = require('../modelos/informe');
+const { generarPdfInforme } = require("../helpers/generarPdfInforme");
+
 const mongoose = require("mongoose");
 const multer = require('multer');
 const express = require('express');
@@ -11,22 +13,21 @@ const { subirBufferACloudinary } = require('../helpers/uploadCloudinary');
 const bodyParser = require('body-parser');
 const app = express();
  
-const { enviarMailConAdjunto } = require("../helpers/mailer");
+const { enviarMailsConAdjunto } = require("../helpers/mailer");
+//const { urlInforme } = require ("../views/pdf_informe");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const API_BASE = process.env.API_BASE;
 
 
-const dayjs = require('dayjs');
 
-const fs = require('fs').promises;
-const fs1 = require('fs');
+const fs = require('fs');
+
 const nodemailer = require("nodemailer");
 
-const PDFDoc = require('pdfkit');
+
 const path = require('path');
-const { resolve } = require('dns');
-const { rejects } = require('assert');
-const { publicDecrypt } = require('crypto');
+const logoBase64 = require("/home/ricardo/Dropbox/serverING/helpers/logoBase64/logoBase64");
 
 require('dotenv').config();
 
@@ -37,6 +38,17 @@ cloudinary.config({
    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
    api_key: process.env.CLOUDINARY_API_KEY,
    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+//Configurar NodeMailer
+const transporter = nodemailer.createTransport({
+   host: process.env.SMTP_HOST,
+   port: process.env.SMTP_PORT,
+   auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+
+   }
 });
 
 // Configuración de Multer para almacenar las imágenes en la carpeta 'uploads'
@@ -300,7 +312,7 @@ const crearInforme = async (req, res) => {
       error: error.message
     });
   }
-};
+}; //fin crearInforme
 
 const subirImagenesInforme = async (req, res) => {
    console.log("Estoy en subirImagenes");
@@ -373,43 +385,189 @@ const subirImagenesInforme = async (req, res) => {
          error: error.message
       });
    }
-};
+}; //fin subirImagensInforme
 
-const enviarInformePorEmail = async (req, res) => {
+const obtenerVistaPdfInforme = async (req, res) => {
+   console.log("Hola!, desde ObtenerPdfInforme");
+   
+
    try {
       const { id } = req.params;
-      const { pdfBase64 } = req.body;
+       if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send("ID inválido");
+    }
 
-      if(!mongoose.Types.ObjectId.isValid(id)) {
-         return res.status(400).json({
+    const informe = await Informe.findById(id).lean();
+      if (!informe) {
+         return res.status(404).json({
             ok: false,
-            error: "ID invalido"
+            error: "Informe no encontrado"
          });
       }
-      if (!pdfBase64) {
-         return res.status(400).json({
-            ok: false,
-            error: "falta pdfBase64"
-         });
-      }
-      const informe = await Informe.findById(id).lean();
+
+      return res.render("pdf_informe", {
+         informe,
+         logoBase64
+      });
+   }catch (error) {
+      console.error("Error renderizando vista PDF:", error);
+   }
+       
+} //fin obtenerVistaPdfInforme 
+
+
+const enviarInformePorEmail = async (req, res) => {
+   console.log('estoy en enviarInformePorEmail');
+   
+   
+   try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send("ID inválido");
+    }
+
+     const informe = await Informe.findById(id).lean();
       if (!informe) {
       return res.status(404).json({
         ok: false,
         error: "Informe no encontrado"
       });
     }
-   } catch (err) {
-      console.log("error en enviarInformePorEmail", err);
+    const emailsInforme = Array.isArray(informe.emails)
+      ? informe.emails.map( x => String(x).trim()).filter(Boolean) : [];
+
+   const emailIngroup = String(process.env.EMAIL_ARCHIVO_INGROUP || "").trim();
+
+   const destinatarios = [
+      ...new Set([
+         ...emailsInforme,
+         emailIngroup
+      ].filter(Boolean))
+   ];
+   if(!destinatarios.length) {
+      return res.status(400).json({
+         ok: false,
+         error: "No hay destinatarios configurados"
+      });
    }
-}
-     
+
+   const API_BASE = process.env.API_BASE;
+    
+    const urlInforme = `${API_BASE}/informes/pdf/informe/${id}`;
+
+    console.log("Generando PDF desde:", urlInforme);
+
+    const pdfBuffer = await generarPdfInforme(urlInforme);
+    console.log("PDF generado, bytes:", pdfBuffer.length);
+    const carpetaPDF = path.join(__dirname, "..", "pdfs");
+    if(!fs.existsSync(carpetaPDF)) {
+      fs.mkdirSync(carpetaPDF, { recursive: true});
+    }
+
+
+      const numeroFormateado = String(informe.numero || 0).padStart(6, "0");
+      const nombreArchivo = `Informe_${numeroFormateado}.pdf`;
+      const outputPath = path.join(carpetaPDF, nombreArchivo);
+
+      fs.writeFileSync(outputPath, pdfBuffer);
+      console.log("PDF guardado en:", outputPath);
+
+      const html =  `
+       <p>Estimado cliente:</p>
+         <p>Adjuntamos el <b> Informe de Servicio N° ${informe.numero}</b>.</p>
+         <p><b>Cliente:</b> ${informe.cliente || ""}</p>
+         <p><b>Fecha:</b> ${informe.fechaFin }</p>
+            <br>
+         <p>Saludos cordiales.</p>
+         p><b>INGroup S.R.L.</b></p>`;
+
+      const info = await enviarMailsConAdjunto({
+         to: destinatarios.join(","),
+         subject: `Informe de Servicio N° S{informe.numero} - ${informe.cliente || ""}`,
+         html,
+         filename: nombreArchivo,
+         pdfBuffer
+      
+   });
+
+      await Informe.findByIdAndUpdate (id, {
+         rutaPdf: outputPath,
+         enviado: true,
+         fechaEnvio: new Date()
+   });
+   
+   return res.json({
+      ok: true,
+      msg: "Informe enviado por email correctamente",
+      destinatarios,
+      archivo: nombreArchivo,
+      messageId: info.messageId
+    });
+
+   } catch (error) {
+      
+    console.error("Error en enviarInformePorEmail:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+} //cierra enviarInformePorEmail
+
+const generarPdfInformeDescarga = async (req, res) => {
+   try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send("ID inválido");
+    }
+
+     const informe = await Informe.findById(id).lean();
+      if (!informe) {
+         return res.status(404).json({
+            ok: false,
+            error: "Informe no encontrado"
+         });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const urlInforme = `${baseUrl}/informes/pdf/informe/${id}`;
+
+      console.log("Generando PDF desde:", urlInforme);
+
+      const pdfBuffer = await generarPdfInforme(urlInforme)
+   
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.setHeader(
+      "Content-Disposition",
+      `inline; filename="Informe_${informe.numero}.pdf"`
+    );
+
+      return res.end(pdfBuffer);
+   } catch (error) {
+      console.error("Error generando PDF:", error);
+      return res.status(500).send("Error generandi PDF");
+   }
+
+};
+
+
+
+
+
 
     
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
-   subirImagenesInforme
+   subirImagenesInforme, 
+   enviarInformePorEmail,
+   obtenerVistaPdfInforme,
+   generarPdfInformeDescarga
+   
 }
 

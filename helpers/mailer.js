@@ -10,9 +10,9 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-async function enviarMailConAdjunto({to, subject, html, filename, pdfBase64 }) {
-    const buffer = Buffer.from(pdfBase64, "base64");
-
+async function enviarMailsConAdjunto({to, subject, html, filename, pdfBuffer  }) {
+   
+    const buffer = Buffer.from(pdfBuffer);
     const info = await transporter.sendMail({
         from: process.env.SMTP_FROM,
         to,
@@ -30,5 +30,5 @@ async function enviarMailConAdjunto({to, subject, html, filename, pdfBase64 }) {
 }
 
 module.exports = {
-    enviarMailConAdjunto
+    enviarMailsConAdjunto
 };

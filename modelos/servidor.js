@@ -2,6 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
+
+
 
 const { dbConn } = require('../baseDatos/configDB');
 const { json } = require('express');
@@ -41,6 +44,10 @@ class Server {
         this.app.use( express.static('publico'));
         this.app.use(cors());
         this.app.use(express.json());//para parsear el body
+        this.app.use(express.json({ limit: "50mb"}));
+        this.app.use(express.urlencoded({limit: "50mb", extended: true}));
+        this.app.set("view engine", "ejs");
+        this.app.set("views", path.join(process.cwd(), "views"));
     }
 
     routes(){
@@ -54,6 +61,8 @@ class Server {
      
 
     }
+
+  
 
     listen(){
         this.app.listen(this.port, () => {
