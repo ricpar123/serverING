@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de Servicio</title>
+<style>
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+    @media print {
+      .acciones-pdf {
+        display: none !important;
+      }
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .hoja {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 10mm;
+    }
+
+    .contenedor {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .contenedor img {
+      width: 260px;
+    }
+
+    .rectangulo {
+      border: 1px solid #000;
+      padding: 6px;
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    #titulo {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .campo {
+      border: 1px solid #000;
+      padding: 6px;
+      min-height: 28px;
+    }
+
+    .bloque {
+      border: 1px solid #000;
+      padding: 6px;
+      margin-bottom: 8px;
+    }
+
+    .bloque h3 {
+      margin: 0 0 6px 0;
+      font-size: 13px;
+    }
+
+    .firmas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .firma-box {
+      border: 1px solid #000;
+      text-align: center;
+      padding: 6px;
+      min-height: 100px;
+    }
+
+    .firma-box img {
+      max-height: 70px;
+      margin-top: 5px;
+    }
+
+    #listaLinks {
+      display: block;
+      
+    }
+    #listaLinks li {
+      margin-bottom: 6px;
+    }
+
+    .acciones-pdf {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="hoja">
+
+  <!-- LOGO -->
+  <div class="contenedor">
+    <img src="<%= logoBase64 %>">
+  </div>
+
+  <!-- DATOS EMPRESA -->
+  <div class="rectangulo">
+    Maria F. Gonzalez 820 c/ Dr. Molinas<br>
+    Tel: (0981) 401 850 / (0981) 542 729<br>
+    empresaingroup@gmail.com<br>
+    Fdo. de la Mora - Paraguay
+  </div>
+
+  <!-- TITULO -->
+  <div class="rectangulo" id="titulo">
+    INFORME DE SERVICIO TECNICO
+  </div>
+
+  <!-- GRID 1 -->
+  <div class="grid-2">
+    <div class="campo"><b>Nº:</b> <%= informe.numero || "" %></div>
+    <div class="campo"><b>Técnico:</b>
+      <%= Array.isArray(informe.tecnicos) ? informe.tecnicos.join(", ") : (informe.tecnico || "") %>
+    </div>
+
+    <div class="campo"><b>Cliente:</b> <%= informe.cliente || "" %></div>
+    <div class="campo"><b>Equipo / Marca:</b>
+      <%= (informe.equipo || "") + " / " + (informe.marca || "") %>
+    </div>
+
+    <div class="campo"><b>Modelo / Serie:</b>
+      <%= (informe.modelo || "") + " / " + (informe.serie || "") %>
+    </div>
+    <div class="campo"><b>Motivo:</b> <%= informe.motivo || "" %></div>
+
+    <div class="campo"><b>Tipo trabajo:</b> <%= informe.tipoTrabajo || "" %></div>
+    <div class="campo"><b>Presupuesto:</b> <%= informe.presupuesto || "" %></div>
+  </div>
+
+  <!-- GRID 2 -->
+  <div class="grid-3">
+    <div class="campo"><b>Fecha:</b> <%= informe.fechaFin || informe.fechaInicio || "" %></div>
+    <div class="campo"><b>Hora inicio:</b> <%= informe.horaInicio || "" %></div>
+    <div class="campo"><b>Hora término:</b> <%= informe.horaFin || "" %></div>
+  </div>
+
+  <!-- SERVICIO -->
+  <div class="bloque">
+    <h3>Servicio Realizado</h3>
+    <p><%= informe.servicio || "" %></p>
+  </div>
+
+  <!-- OBS -->
+  <div class="bloque">
+    <h3>Observaciones</h3>
+    <p><%= informe.obs || "" %></p>
+  </div>
+
+  <!-- GRID 3 -->
+  <div class="grid-3">
+    <div class="campo"><b>Recibido por:</b> <%= informe.recibido || "" %></div>
+    <div class="campo"><b>Status:</b> <%= informe.status || "" %></div>
+    <div class="campo"><b>Repuestos:</b> <%= informe.repuestos || "" %></div>
+  </div>
+
+  <!-- FIRMAS -->
+  <div class="firmas">
+    <div class="firma-box">
+      <b>Firma Cliente</b><br>
+      <% if (informe.firma) { %>
+        <img src="<%= informe.firma %>">
+      <% } %>
+    </div>
+
+    <div class="firma-box">
+      <b>Firma Técnico</b><br>
+      <% if (informe.firmaT) { %>
+        <img src="<%= informe.firmaT %>">
+      <% } %>
+    </div>
+  </div>
+
+  <!-- LINKS -->
+  <div class="bloque">
+    <h3>Links de las fotos</h3>
+    <ul id="listaLinks">
+      <% if (Array.isArray(informe.links)) { %>
+        <% informe.links.forEach((link, i) => { %>
+          <li>
+            <a href="<%= link %>" target="_blank">
+              Img <%= i + 1 %>
+            </a> 
+            <br>
+            <span style="font-size: 10px; word-break: break-all;">
+              <%= link %>
+            </span> 
+          </li>
+        <% }) %>
+      <% } %>
+    </ul>
+  </div>
+
+</div>
+
+<div class="acciones-pdf">
+  <button id="btnEnviarEmail" type="button">Enviar por Email</button>
+  <button id="btnCancelar" type="button">Cancelar</button>
+</div>
+
+<script>
+  const informeId = "<%= informe._id %>";
+  const API_BASE = "<%= typeof API_BASE !== 'undefined' ? API_BASE : '' %>"; // opcional
+
+  document.getElementById("btnEnviarEmail")?.addEventListener("click", async () => {
+    try {
+      const btn = document.getElementById("btnEnviarEmail");
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+
+      const res = await fetch(`/informes/informe/${encodeURIComponent(informeId)}/enviar-email`, {
+        method: "POST",
+        headers: { "auth": "auth" }
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Error enviando email");
+      }
+
+      alert("Informe enviado correctamente");
+      
+        
+
+      
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    } finally {
+      const btn = document.getElementById("btnEnviarEmail");
+      btn.disabled = false;
+      btn.textContent = "Enviar por Email";
+    }
+  });
+
+  document.getElementById("btnCancelar")?.addEventListener("click", () => {
+    window.close(); // o redirigir al listado
+  });
+</script>
+</body>
+</html>
