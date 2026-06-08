@@ -27,7 +27,7 @@ const nodemailer = require("nodemailer");
 
 
 const path = require('path');
-const logoBase64 = require("/home/ricardo/Dropbox/serverING/helpers/logoBase64/logoBase64");
+const logoBase64 = require("../helpers/logoBase64/logoBase64");
 
 require('dotenv').config();
 
