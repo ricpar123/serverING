@@ -53,7 +53,8 @@ const clienteGetporNombre = async(req, res=response) => {
 
 const clientesPost = async (req, res = response) => {
     
-    const { nombre, emails, status} = req.body;
+    const { nombre, email1, email2, email3, email4, status} = req.body;
+    console.log("recibido del frontend:", req.body);
    
     
     try {
@@ -66,7 +67,7 @@ const clientesPost = async (req, res = response) => {
             });
         }
       
-        const dbCliente  = new Cliente({nombre, emails, status});
+        const dbCliente  = new Cliente({nombre, email1, email2, email3, email4, status});
        
 
         await dbCliente.save();
@@ -115,13 +116,13 @@ const clientesPutInactivar = async (req, res) => {
        console.log("id del cliente: ", id);
        
    
-       const {nombre, emails, status} = req.body;
+       const {nombre, email1, enail2, email3, email4, status} = req.body;
    
        console.log('datos: ', req.body);
       
        
    
-       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, emails, status }, {new: true});
+       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, email1, enail2, email3, email4, status }, {new: true});
        
       
        
