@@ -43,7 +43,7 @@ class Server {
         //Directorio publico
         this.app.use( express.static('publico'));
         this.app.use(cors());
-        this.app.use(express.json());//para parsear el body
+        //this.app.use(express.json());//para parsear el body
         this.app.use(express.json({ limit: "50mb"}));
         this.app.use(express.urlencoded({limit: "50mb", extended: true}));
         this.app.set("view engine", "ejs");

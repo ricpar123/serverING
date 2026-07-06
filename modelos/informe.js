@@ -5,7 +5,6 @@ const { Schema, model } = require('mongoose');
 const informeSch = new Schema({
     numero: {type : Number},
     cliente: {type : String },
-    emails: [{type: [String], default: []}],
     tecnicos: [{type : [String], default: [] }],
     equipo: {type : String},
     marca: {type : String },
@@ -14,12 +13,10 @@ const informeSch = new Schema({
     motivo: {type : String},
     tipoTrabajo: {type : String},
     presupuesto: {type : String},
-    oferta: {type: String},
     fechaInicio: {type : String},
     horaInicio: {type : String},
     fechaFin:{type : String},
     horaFin: {type : String},
-    diasT: { type: String},
     servicio: {type : String},
     obs: {type : String},
     recibido: {type : String},
@@ -27,9 +24,8 @@ const informeSch = new Schema({
     firmaT: {type : String },
     status: {type : String },
     repuestos: {type : String },
-    links: {type: [String],
-            default: []
-    },
+    fotosAntes: {type: [String], default: []},
+    fotosDespues: {type: [String], default: []},
     rutaPdf: {
         type: String,
         default: ""
