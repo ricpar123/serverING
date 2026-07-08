@@ -19,7 +19,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const API_BASE = process.env.API_BASE;
 
-
+const { generarPdfBuffer } = require('../helpers/generarPdfBuffer.js');
+const { enviarCorreo } = require('../helpers/enviarCorreo');
 
 const fs = require('fs');
 
@@ -282,6 +283,7 @@ const informesDelete = async(req, res) => {
    
 }
 
+
 const crearInforme = async (req, res) => {
    //console.log("datos", req.body);
     console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
@@ -342,13 +344,47 @@ const crearInforme = async (req, res) => {
       
     });
 
-    await nuevoInforme.save();
-   
+    const informeGuardado = await nuevoInforme.save();
+    const pdfBuffer = await generarPdfBuffer(informeGuardado);
+
+    const resultadoCorreo = await enviarCorreo({ 
+      informe: informeGuardado, cliente, pdfBuffer });
+
+    console.log("Resultado del envío de correo:", resultadoCorreo);
+/*
+    let email1 = '';
+    let email2 = '';
+    let email3 = '';
+    let email4 = '';
+       
+
+    console.log('cliente: ', cliente);
+    let datosCliente = [];
+
+         try {
+            await Cliente.find({nombre:cliente}).then(
+              cli => datosCliente = cli[0]);
+            
+          } catch (err) {
+            console.log('error: ', err);
+            
+          }
+
+      console.log('datos del cliente: ', datosCliente);
+      email1 = datosCliente.email1;
+      email2 = datosCliente.email2;
+      email3 = datosCliente.email3;
+      email4 = datosCliente.email4;
+   */
 
     return res.status(201).json({
       ok: true,
       msg: "crearInforme V3 ejecutado",
-      nuevoInforme: nuevoInforme
+      nuevoInforme: informeGuardado,
+      correo: resultadoCorreo
+      
+      
+     
      
     });
 
@@ -359,8 +395,32 @@ const crearInforme = async (req, res) => {
         error: error.message
       });
     }
-}; //fin crearInforme
 
+    let email1 = '';
+    let email2 = '';
+    let email3 = '';
+    let email4 = '';
+
+    console.log('cliente: ', cliente);
+    let datosCliente = [];
+
+    try {
+         await Cliente.find({nombre:cliente}).then(
+            cli => datosCliente = cli[0]);
+            
+         } catch (err) {
+            console.log('error: ', err);
+            
+         }
+
+      console.log('datos del cliente: ', datosCliente);
+      email1 = datosCliente.email1;
+      email2 = datosCliente.email2;
+      email3 = datosCliente.email3;
+      email4 = datosCliente.email4;
+
+}; //fin crearInforme
+/*
 function generarHtmlInforme(informe) { 
   const logoBase64 = require("../helpers/logoBase64/logoBase64");
   
@@ -720,14 +780,13 @@ const generarPdfInforme = async (req, res) => {
    }
    
 } 
-
+*/
  
     
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
-   generarPdfInforme,
    subirACloudinary
    
 }

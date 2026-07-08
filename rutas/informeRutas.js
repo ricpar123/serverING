@@ -19,7 +19,7 @@ const { validarAuth } = require('../midlewares/validarAuth');
 
 router.get('/', informesGet);
 router.get('/:id', obtenerInformePorId);
-router.get("/informe/:id/pdf", generarPdfInforme);
+
 //router.get("/pdf/informe/:id/descargar", generarPdfInformeDescarga);
 
 router.get('/inicio/:inicio/fin/:fin/cliente/:cliente', informesGetDatos);
