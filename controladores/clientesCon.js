@@ -89,21 +89,20 @@ const clientesPost = async (req, res = response) => {
 }
 
 const clientesPutInactivar = async (req, res) => {
-    
-    
+    const { id } = req.params;
+    const { status } = req.body;
 
-    const {id, status} = req.body;
+    console.log("params:", req.params);
+    console.log("body:", req.body);
 
-    console.log('datos: ', req.body);
-    
-    
-
-    const dbCliente = await Cliente.findByIdAndUpdate(id, {status }, {new: true});
-    
-   
+    const dbCliente = await Cliente.findByIdAndUpdate(
+        id , 
+        { status }, 
+        {new: true}
+    );
     
     res.json({
-        msg: 'put inactivar desde el controlador',
+        ok: true,
         dbCliente
         
     });
@@ -116,13 +115,13 @@ const clientesPutInactivar = async (req, res) => {
        console.log("id del cliente: ", id);
        
    
-       const {nombre, email1, enail2, email3, email4, status} = req.body;
+       const {nombre, email1, email2, email3, email4} = req.body;
    
        console.log('datos: ', req.body);
       
        
    
-       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, email1, enail2, email3, email4, status }, {new: true});
+       const dbCliente = await Cliente.findByIdAndUpdate(id, {nombre, email1, email2, email3, email4}, {new: true});
        
       
        

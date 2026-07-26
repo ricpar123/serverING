@@ -5,7 +5,7 @@ const  Informe  = require('../modelos/informe');
 const mongoose = require("mongoose");
 const multer = require('multer');
 const express = require('express');
-const  cloudinary  = require('../helpers/cloudinary');
+
 const Numero = require('../modelos/numero');
 const Cliente = require('../modelos/cliente');
 const { getNextInformeNumber } = require('../helpers/numero');
@@ -20,6 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 const API_BASE = process.env.API_BASE;
 
 const { generarPdfBuffer } = require('../helpers/generarPdfBuffer.js');
+const { enviarCorreo } = require('../helpers/enviarCorreo');
+const { subirACloudinary } = require('../helpers/subirACloudinary');
 
 const fs = require('fs');
 
@@ -29,18 +31,13 @@ const nodemailer = require("nodemailer");
 const path = require('path');
 const logoBase64 = require("../helpers/logoBase64/logoBase64");
 const puppeteer  = require('puppeteer');
-const { enviarCorreo } = require('../helpers/enviarCorreo.js');
 
 require('dotenv').config();
 
 
 let number = 0;
 
-cloudinary.config({ 
-   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-   api_key: process.env.CLOUDINARY_API_KEY,
-   api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+
 
 //Configurar NodeMailer
 const transporter = nodemailer.createTransport({
@@ -72,19 +69,7 @@ const upload = multer({
 
 
 
-async function subirACloudinary(base64Data) {
-   try {
-      const res = await cloudinary.uploader.upload(base64Data, {
-         folder: "Ingroup_fotos",
-         resource_type: "image"
-      });
-      return res.secure_url;
 
-   } catch (error) {
-      console.error("Error subiendo imagen");
-      throw error;
-   }
-}
 
 
 
@@ -294,7 +279,7 @@ const crearInforme = async (req, res) => {
     const { 
       cliente, tecnicos, equipo, marca, modelo, nroSerie, motivoVisita, tipoTrabajo, presupuesto,
       horaInicio, horaFin, fechaInicio, fechaFin, servicio, obs, recibido, firma, firmaT,
-      status, repuestos, fotosAntes, fotosDespues } = req.body;
+      status, situacion, repuestos, fotosAntes, fotosDespues } = req.body;
    
    //subir fotosAntes a Cloudinary
     let urlAntes = [];
@@ -337,6 +322,7 @@ const crearInforme = async (req, res) => {
       recibido: recibido,
       firma: firma,
       firmaT: firmaT,
+      situacion: situacion,
       status: status,
       repuestos: repuestos,
       fotosAntes: urlAntes,
@@ -347,68 +333,42 @@ const crearInforme = async (req, res) => {
     const informeGuardado = await nuevoInforme.save();
     const pdfBuffer = await generarPdfBuffer(informeGuardado);
 
-    let email1 = '';
-    let email2 = '';
-    let email3 = '';
-    let email4 = '';
-       
+    const resultadoCorreo = await enviarCorreo({ 
+    informe: informeGuardado, cliente: cliente, pdfBuffer: pdfBuffer });
 
-    console.log('cliente: ', cliente);
-    let datosCliente = [];
-
-         
-      const clienteEncontrado = await Cliente.findOne({
-               nombre: informeGuardado.cliente});
-
-      const resultadoCorreo = await enviarCorreo({
-      informe: informeGuardado,
-      cliente: clienteEncontrado,
-      pdfBuffer, 
-      emailsAdicionales: []
-    
-        
-    });
-      
-   console.log('resultadoCorreo: ', resultadoCorreo);
+    console.log("Resultado del envío de correo:", resultadoCorreo);
 
     return res.status(201).json({
       ok: true,
-      msg: "crearInforme V3 ejecutado",
-     
+      msg: "Informe creado exitosamente",
       resultado: {
-        informeGuardado: true,
-        cloudinary: {
-          ok: true
-        },
-        pdf: {
-          ok: true
-        },
-        correo: {
-          ok: true,
-          correo: resultadoCorreo
-        },
-        informe: {
-          id: informeGuardado._id,
-          numero: informeGuardado.numero,
-          cliente: informeGuardado.cliente,
-        }
-  
+         informeGuardado: true,
+         cloudinary: {
+            ok: true
+      },
+         pdf: {
+            ok: true
+         },
+         correo: resultadoCorreo
+      },
+      informe: {
+         id: informeGuardado._id,
+         numero: informeGuardado.numero
+         
       }
-      
     });
-    console.log(resultadoCorreo);
+
   } catch (error) {
-    console.error("Error en crearInforme:", error);
-    return res.status(500).json({
-      ok: false,
-      msg: "Error en crearInforme",
-      error: error.message
-    });
+      console.error("Error crearInforme:", error);
+      return res.status(500).json({
+        ok: false,
+        error: error.message
+      });
+    }
+
     
-  }
-      
-     
-};//fin crearInforme
+
+}; //fin crearInforme
 
  
     
@@ -416,6 +376,7 @@ module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
-   subirACloudinary
+   
    
 }
+

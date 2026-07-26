@@ -22,6 +22,7 @@ const informeSch = new Schema({
     recibido: {type : String},
     firma: {type : String },
     firmaT: {type : String },
+    condicion: {type: String},
     status: {type : String },
     repuestos: {type : String },
     fotosAntes: {type: [String], default: []},

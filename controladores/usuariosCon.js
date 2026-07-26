@@ -154,21 +154,21 @@ const usuariosPut = async (req, res) => {
 
 const usuariosPutInactivar = async (req, res) => {
     
+    console.log("hola mundo..estoy en desactivar");
+
+    const {id } = req.params;
+
+    console.log('id a desactivar', id);
+    
     
 
-    const {id, status} = req.body;
-
-    console.log('datos: ', req.body);
-    
-    
-
-    const dbEquipo = await Usuario.findByIdAndUpdate(id, {status }, {new: true});
+    const usuario = await Usuario.findByIdAndUpdate(id, {status:"inactivo" }, {new: true});
     
    
     
     res.json({
         msg: 'put inactivar desde el controlador',
-        dbEquipo
+        usuario
         
     });
 }
