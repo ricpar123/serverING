@@ -32,106 +32,79 @@ function normalizarEmails(emails = []) {
   ];
 }
 
-/**
- * Traduce el estado técnico de ZeroBounce
- * a un mensaje entendible para el usuario.
- */
-function obtenerMotivoValidacion(resultado) {
-  switch (resultado.status) {
-    case "invalid":
-      return "La dirección no existe o no puede recibir correos.";
 
-    case "catch-all":
-      return "El servidor del destinatario no permite confirmar si esa casilla existe.";
-
-    case "unknown":
-      return "ZeroBounce no pudo confirmar temporalmente esta dirección.";
-
-    case "spamtrap":
-      return "La dirección fue identificada como una posible trampa de spam.";
-
-    case "abuse":
-      return "La dirección está asociada a reportes frecuentes de correo no deseado.";
-
-    case "do_not_mail":
-      return "ZeroBounce recomienda no enviar correos a esta dirección.";
-
-    default:
-      return "La dirección no pudo validarse.";
-  }
-}
 
 /**
  * Valida una dirección mediante ZeroBounce.
  *
  * Requiere Node 18 o superior para usar fetch nativo.
  */
-async function validarEmailZeroBounce(email) {
-  if (!process.env.ZEROBOUNCE_API_KEY) {
-    throw new Error("No está configurada la API Key de ZeroBounce.");
+async function validarEmailMailsSo(email) {
+  const apiKey = process.env.API_KEY_MAIL_SO;
+
+  if(!apiKey) {
+    return {
+      email, 
+      valido: false,
+      estado: "error",
+      motivo:"MAILS_SO_API_KEY no esta configurada"
+    };
   }
-
-  const parametros = new URLSearchParams({
-    api_key: process.env.ZEROBOUNCE_API_KEY,
-    email,
-    ip_address: ""
-  });
-
-  const controlador = new AbortController();
-
-  const temporizador = setTimeout(() => {
-    controlador.abort();
-  }, 30000);
-
   try {
-    const respuesta = await fetch(
-      `https://api.zerobounce.net/v2/validate?${parametros.toString()}`,
-      {
-        method: "GET",
-        signal: controlador.signal
-      }
-    );
+    const url = `https://api.mails.so/v1/validate?email=${encodeURIComponent(email)}`;
 
+    const respuesta = await fetch(url, {
+      method: 'GET',
+      headers: {
+        "x-mails-api-key": apiKey
+      }
+    });
+    const resultado = await respuesta.json();
     if (!respuesta.ok) {
-      throw new Error(
-        `ZeroBounce respondió con HTTP ${respuesta.status}`
-      );
+      return {
+        email,
+        valido: false,
+        estado: "error",
+        motivo:
+          resultado?.error || `Error HTTP ${respuesta.status} al validar el correo`
+      };
+    }
+    if(resultado.error || !resultado.data) {
+      return {
+        email,
+        valido: false,
+        estado: 'error',
+        motivo: resultado.error || 'Respuesta inválida de mails.so'
+      };
     }
 
-    const resultado = await respuesta.json();
+    const data = resultado.data;
 
     return {
       email,
-      status: String(resultado.status || "").toLowerCase(),
-      subStatus: resultado.sub_status || ""
+      valido: data.result === 'deliverable',
+      estado: data.result,
+      motivo: data.reason || '',
+      score: data.score,
+      sugerencia: data.did_you_mean || null,
+      esDesechable: data.is_disposable === true,
+      dominioValido: data.isv_domain === true,
+      mxValido: data.isv_mx === true
     };
+  } catch (error){
+    console.error(`Error validando ${email} con mails.so:`, error);
 
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error(
-        `ZeroBounce tardó demasiado en validar ${email}.`
-      );
-    }
-
-    throw error;
-
-  } finally {
-    clearTimeout(temporizador);
-  }
+        return {
+            email,
+            valido: false,
+            estado: 'error',
+            motivo: error.message
+        };  
+  }  
 }
 
-
-/**
- * Envía el PDF del informe.
- */
-
-
-      
-
 async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [] }) {
-    /*
-   * Direcciones variables que sí queremos verificar.
-   */
+    /*Primero obtenemos las direcciones de email a enviar*/
 
     const emailsAValidar = normalizarEmails([
         cliente?.email1,
@@ -146,60 +119,34 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
 
     /*
    * Correos internos ya conocidos.
-   *
-   * No hace falta gastar un crédito de ZeroBounce
-   * verificándolos en cada informe.
    */
-        const emailsConfiables = [];
+    const emailsValidos = [];
+    const emailsInValidos = [];
+    
+    for (const email of emailsAValidar){
+      const resultado = await validarEmailMailsSo(email);
+      console.log("Validacion mails.so:",resultado);
 
-    const validos = [];
-    const noValidos = [];
-    const erroresValidacion = [];
-
-    /*
-   * Validamos en paralelo para no esperar una dirección
-   * después de la otra.
-   */
-
-    const resultados = await Promise.allSettled(
-        emailsAValidar.map(validarEmailZeroBounce)
-    );
-
-    resultados.forEach((resultado, indice) => {
-    const email = emailsAValidar[indice];
-
-        if (resultado.status === "rejected") {
-            erroresValidacion.push({
-                email,
-                motivo:
-                resultado.reason?.message ||
-                    "No se pudo consultar el servicio de validación."
-            });
-
-            return;
-        }
-    const validacion = resultado.value;
-
-    if (validacion.status === "valid") {
-      validos.push(email);
-      return;
+      if(resultado.valido) {
+        emailsValidos.push(email);
+      } else {
+        emailsInValidos.push({
+          email,
+          estado: resultado.estado,
+          motivo: resultado.motivo
+          
+        });
+      }
     }
 
-    noValidos.push({
-      email,
-      status: validacion.status,
-      subStatus: validacion.subStatus,
-      motivo: obtenerMotivoValidacion(validacion)
-    });
-  });
-
+   
   /*
    * Las direcciones válidas más las internas confiables.
    */
 
     const destinatarios = normalizarEmails([
-        ...validos,
-        ...emailsConfiables
+        ...emailsValidos,
+        process.env.EMAIL_INGROUP
     ]);
 
     if (destinatarios.length === 0) {
@@ -207,9 +154,8 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
             estado: "sin destinatarios",
             enviado: false,
             mensaje: "No hay direcciones de correo válidas para enviar el informe.",
-            validos,
-            noValidos,
-            erroresValidacion
+            
+            
         };
     }   
 
@@ -219,7 +165,7 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
             /*
                 * Nodemailer acepta directamente un array.
             */
-            to: destinatarios,
+            to: destinatarios.join(","),
 
                 subject: `Informe de Servicio Nro - ${informe.numero}`,
 
@@ -243,30 +189,10 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
                 
         });
 
-        const rechazadosSmtp = info.rejected || [];
-        const aceptadosSmtp = info.accepted || [];
-
-        const huboAdvertencias =
-            noValidos.length > 0 ||
-            erroresValidacion.length > 0 ||
-            rechazadosSmtp.length > 0;
-
-            return {
-                estado: huboAdvertencias ? "parcial" : "exito",
-                enviado: aceptadosSmtp.length > 0,
-
-                mensaje: huboAdvertencias
-                ? "El correo fue enviado únicamente a las direcciones aprobadas."
-                : "El servidor de correo aceptó todos los destinatarios para su envío.",
-
-                destinatarios,
-                aceptadosSmtp,
-                rechazadosSmtp,
-
-                validos,
-                noValidos,
-                erroresValidacion,
-
+         return {
+                estado: "exito",
+                emailsValidos,
+                emailsInValidos,
                 messageId: info.messageId
             };
 
@@ -292,15 +218,15 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
             mensaje: motivo,
 
             destinatarios,
-            validos,
-            noValidos,
-            erroresValidacion,
+            emailsValidos,
+            emailsInValidos,
+            
 
             detalleTecnico: errorMail.message
         };
             
     }
-}
+  }
 
 
 module.exports = {

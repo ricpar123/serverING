@@ -5,7 +5,7 @@ const  Informe  = require('../modelos/informe');
 const mongoose = require("mongoose");
 const multer = require('multer');
 const express = require('express');
-const  cloudinary  = require('../helpers/cloudinary');
+const  cloudinary  = require('../helpers/cloudinary.js');
 const Numero = require('../modelos/numero');
 const Cliente = require('../modelos/cliente');
 const { getNextInformeNumber } = require('../helpers/numero');
@@ -93,7 +93,7 @@ const informesGet = async (req, res = response) =>{
     try {
       
         const informes = await Informe.find({}, {
-         cliente: 1, numero: 1, fechaFin: 1, 
+         
         });
 
        console.log('informes:', informes);
@@ -410,12 +410,50 @@ const crearInforme = async (req, res) => {
      
 };//fin crearInforme
 
+const generarPdfInforme = async (req, res) => {
+   try {
+      const { id } = req.params;
+      console.log("generarPdfInforme id:", id);
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+         return res.status(400).json({
+            ok: false,
+            error: "ID inválido"
+         });
+      }
+
+      const informe = await Informe.findById(id).lean();
+
+      if (!informe) {
+         return res.status(404).json({
+            ok: false,
+            error: "Informe no encontrado"
+         });
+      }
+
+      const pdfBuffer = await generarPdfBuffer(informe);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename=informe_${informe.numero}.pdf`);
+      res.send(pdfBuffer); 
+
+   } catch (error) {
+      console.error("Error en generarPdfInforme:", error);
+      return res.status(500).json({
+         ok: false,
+         error: error.message
+      });
+   }
+};
+
+
  
     
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
+   generarPdfInforme,
    subirACloudinary
    
 }

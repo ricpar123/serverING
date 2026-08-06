@@ -16,7 +16,7 @@ const clientesGet = async(req, res=response) => {
         });
     
       } catch (error) {
-        console.log('error');
+        console.log('error'. error);
         return res.status(500).json({
             ok: false,
             msg: 'Por favor contacte con el administrador'

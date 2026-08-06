@@ -60,9 +60,9 @@ function generarHtmlInforme(informe) {
 
       
       .seccion {
-        margin-top: 12px;
+        margin-top: 15px;
         border-top: 1px solid #ccc;
-        padding-top: 8px;
+        padding-top: 15px;
         page-break-inside: avoid;
       }
 
@@ -89,8 +89,8 @@ function generarHtmlInforme(informe) {
       .texto-largo {
         border: 1px solid #ddd;
         padding: 6px;
-        min-height: 55px;
-        max-height: 85px:
+        min-height: 75px;
+        max-height: 75px;
         overflow: hidden;
         white-space: pre-wrap;
       }
@@ -267,7 +267,7 @@ function generarHtmlInforme(informe) {
 
     <div class="footer">
           <div class="footer-left">
-            Sistema desarrollado con ❤️ por <strong>freeSoft</strong>
+            <strong>Sistema desarrollado con</strong> ❤️ por <strong>freeSoft</strong>
             @2026
           </div>
 
