@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { continueOnNewPage } = require('pdfkit');
 
 /*
  * Conviene crear el transporter una sola vez,
@@ -103,7 +104,12 @@ async function validarEmailMailsSo(email) {
   }  
 }
 
-async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [] }) {
+async function enviarCorreo({ 
+  informe, 
+  cliente, 
+  pdfBuffer, 
+  emailsAdicionales = [] 
+}) {
     /*Primero obtenemos las direcciones de email a enviar*/
 
     const emailsAValidar = normalizarEmails([
@@ -114,14 +120,11 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
         ...emailsAdicionales
         
     ]);
-   console.log('Cliente recibido en enviarCorreo: ', cliente);
-   console.log('Emails a validar: ', emailsAValidar);
 
-    /*
-   * Correos internos ya conocidos.
-   */
     const emailsValidos = [];
     const emailsInValidos = [];
+
+    // 1) VALIDAR EMAILS DEL CLIENTE CON MAILS.SO
     
     for (const email of emailsAValidar){
       const resultado = await validarEmailMailsSo(email);
@@ -133,39 +136,44 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
         emailsInValidos.push({
           email,
           estado: resultado.estado,
-          motivo: resultado.motivo
+          motivo: resultado.motivo,
+         
           
         });
       }
     }
 
-   
-  /*
-   * Las direcciones válidas más las internas confiables.
+    /*
+   * Correo interno de INGROUP:
+   * lo tratamos aparte porque no queremos confundir
+   * "el correo salió" con "el cliente recibió el correo".
    */
 
-    const destinatarios = normalizarEmails([
-        ...emailsValidos,
-        process.env.EMAIL_INGROUP
-    ]);
+  const emailIngroup = process.env.EMAIL_INGROUP;
 
-    if (destinatarios.length === 0) {
-        return {
-            estado: "sin destinatarios",
-            enviado: false,
-            mensaje: "No hay direcciones de correo válidas para enviar el informe.",
-            
-            
-        };
-    }   
+  const destinatariosFinales = normalizarEmails([
+    ...emailsValidos,
+    emailIngroup
+  ]);
 
-    try {       
+  if (destinatariosFinales.length === 0) {
+    return {
+      estado: "sin_destinatarios_validos",
+      enviado: false,
+      mensaje: "No existen direcciones válidas para enviar el informe.",
+      emailsValidos,
+      emailsInValidos,
+      aceptadosSmtp: [],
+      rechazadosSmtp: []
+    };
+  }
+
+    try {  
+      // 2) ENVÍO REAL CON NODEMAILER     
         const info = await transporter.sendMail({
             from: `"INGROUP Servicios" <${process.env.SMTP_FROM}>`, 
-            /*
-                * Nodemailer acepta directamente un array.
-            */
-            to: destinatarios.join(","),
+            
+            to: destinatariosFinales,
 
                 subject: `Informe de Servicio Nro - ${informe.numero}`,
 
@@ -187,18 +195,75 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
                     }
                 ] 
                 
-        });
+          });
 
+        const aceptadosSmtp = info.accepted || [];
+        const rechazadosSmtp = info.rejected || [];
+
+        /*
+     * 3) DETERMINAR RESULTADO REAL PARA EL USUARIO
+     */
+
+    // Ningún email del cliente pasó mails.so.
+    // Puede haberse enviado solo a INGROUP.
+        if (emailsValidos.length === 0) {
          return {
-                estado: "exito",
+                estado: "sin destinatarios validos",
+                enviado: aceptadosSmtp.length > 0,
+                mensaje: 
+                "No fue posible enviar el informe al cliente, sus direcciones son invalidas",
                 emailsValidos,
                 emailsInValidos,
+                aceptadosSmtp, rechazadosSmtp,
+                copiaIngroupEnviada:
+                  emailIngroup
+                  ? aceptadosSmtp.includes(emailIngroup)
+                  : false,
                 messageId: info.messageId
-            };
 
-                
-                    
-    } catch (errorMail) {
+            };
+        }
+    // Hay por lo menos un email válido,
+    // pero también existen direcciones inválidas
+    // o rechazadas por SMTP.
+        
+        if(
+          emailsInValidos.length > 0 ||   rechazadosSmtp.length > 0
+        ) {
+          return {
+            estado: "parcial",
+            enviado: aceptadosSmtp.length > 0,
+            mensaje: "Informe enviado solamente a las direcciones validas,",
+            emailsValidos,
+            emailsInValidos,
+            aceptadosSmtp,
+            rechazadosSmtp,
+            copiaIngroupEnviada:
+              emailIngroup
+                ? aceptadosSmtp.includes(emailIngroup)
+                : false,
+              messageId: info.messageId
+          };
+        }
+
+          // Todos los emails del cliente pasaron la validación
+          // y SMTP no rechazó destinatarios.
+          return {
+            estado:"exito",
+            enviado: true,
+            mensaje:
+            "Los correos fueron validados y aceptados por ek servidor para su envio.",
+            emailsInValidos,
+            emailsValidos,
+            aceptadosSmtp,
+            rechazadosSmtp,
+            copiaIngroupEnviada:
+              emailIngroup
+                ? aceptadosSmtp.includes(emailIngroup)
+                : false,
+              messageId: info.messageId
+          };    
+      } catch (errorMail) {
         console.error("Error al enviar el correo:", errorMail);
         let motivo = "No se pudo enviar el correo";
 
@@ -217,9 +282,11 @@ async function enviarCorreo({ informe, cliente, pdfBuffer, emailsAdicionales = [
             enviado: false,
             mensaje: motivo,
 
-            destinatarios,
             emailsValidos,
             emailsInValidos,
+
+            aceptadosSmtp: [],
+            rechazadosSmtp: [],
             
 
             detalleTecnico: errorMail.message

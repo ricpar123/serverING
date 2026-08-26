@@ -285,7 +285,7 @@ const informesDelete = async(req, res) => {
 
 
 const crearInforme = async (req, res) => {
-   //console.log("datos", req.body);
+   console.log("datos", req.body);
     console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
   try {
    
@@ -296,7 +296,29 @@ const crearInforme = async (req, res) => {
       horaInicio, horaFin, fechaInicio, fechaFin, servicio, obs, recibido, firma, firmaT,
       status, repuestos, fotosAntes, fotosDespues } = req.body;
    
-   //subir fotosAntes a Cloudinary
+   //subir fotos a Cloudinary
+   const resultados = [];
+   
+      if(fotosAntes.length === 0 && fotosDespues.length === 0) {
+         console.log("No hay fotos para subir");
+
+         return {
+            ok: false, 
+            hayFotos: false,
+            cantidad: 0,
+            resultados: []
+         };
+      } else {
+         return {
+            ok: true, 
+            hayFotos: true,
+            cantidad: resultados.length,
+            resultados
+         }
+      }
+
+
+    /*  
     let urlAntes = [];
       if(fotosAntes  && fotosAntes.length > 0) 
     {
@@ -313,6 +335,7 @@ const crearInforme = async (req, res) => {
       urlDespues = await Promise.all(promesasDespues);
       console.log("url Despues:", urlDespues);
     }  
+   */
 
     //Guardar Informe con el agregado de los links de las imagenes
 
@@ -368,8 +391,10 @@ const crearInforme = async (req, res) => {
     
         
     });
-      
-   console.log('resultadoCorreo: ', resultadoCorreo);
+     
+   console.log("========== RESULTADO CORREO ==========");
+   console.log(resultadoCorreo);
+   console.log("=======================================");
 
     return res.status(201).json({
       ok: true,
@@ -446,6 +471,97 @@ const generarPdfInforme = async (req, res) => {
    }
 };
 
+const enviarImgServer = async (req, res) => {
+   try {
+      const { id } = req.params;
+      console.log("ID informe:", id);
+      console.log("FILES:", req.files);
+
+        if (!id) {
+            return res.status(400).json({
+                ok: false,
+                msg: "No se recibió el ID del informe"
+            });
+        }
+        const informe = await Informe.findById(id);
+
+        if (!informe) {
+            return res.status(404).json({
+                ok: false,
+                msg: "Informe no encontrado"
+            });
+        }
+
+        let archivo;
+        let tipo;
+
+        if (req.files?.fotoAntes?.length) {
+            archivo = req.files.fotoAntes[0];
+            tipo = "fotoAntes";
+        }
+
+        if (req.files?.fotoDespues?.length) {
+            archivo = req.files.fotoDespues[0];
+            tipo = "fotoDespues";
+        }
+
+        if (!archivo) {
+            return res.status(400).json({
+                ok: false,
+                msg: "No se recibió ninguna imagen"
+            });
+        }
+
+        console.log("Tipo:", tipo);
+        console.log("Archivo:", archivo.originalname);
+        console.log("Tamaño:", archivo.size);
+
+        // Convertimos el Buffer que recibe Multer
+        // a Base64 porque subirACloudinary() trabaja con Base64.
+        const base64Data =
+            `data:${archivo.mimetype};base64,` +
+            archivo.buffer.toString("base64");
+
+        const link = await subirACloudinary(base64Data);
+
+        console.log("Link Cloudinary:", link);
+
+        if (tipo === "fotoAntes") {
+
+            if (!Array.isArray(informe.fotosAntes)) {
+                informe.fotosAntes = [];
+            }
+
+            informe.fotosAntes.push(link);
+
+        } else {
+
+            if (!Array.isArray(informe.fotosDespues)) {
+                informe.fotosDespues = [];
+            }
+
+            informe.fotosDespues.push(link);
+        }
+
+        await informe.save();
+
+        return res.status(200).json({
+            ok: true,
+            msg: "Imagen subida correctamente",
+            tipo,
+            link
+        });
+   } catch (error) {
+      console.error("Error en enviarImgServer:", error);
+
+        return res.status(500).json({
+            ok: false,
+            msg: "Error al subir la imagen",
+            error: error.message
+        });
+    }
+};
+   
 
  
     
@@ -454,6 +570,7 @@ module.exports = {
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
    generarPdfInforme,
+   enviarImgServer,
    subirACloudinary
    
 }

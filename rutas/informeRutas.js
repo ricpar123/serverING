@@ -10,7 +10,7 @@ const { generarPdfInformeDescarga } = require("../controladores/informeCon")
 const {
     informesGet, crearInforme,
     informesGetDatos, informesDelete, informesPut, obtenerInformePorId,
-    subirImagenesInforme, generarPdfInforme, enviarInformePorEmail
+    subirImagenesInforme, generarPdfInforme, enviarInformePorEmail, enviarImgServer
 } = require('../controladores/informeCon');
 
 const { validarAuth } = require('../midlewares/validarAuth');
@@ -31,6 +31,13 @@ router.put('/', informesPut);
 
 
 router.post('/informe', crearInforme);
+router.post("/informe/:id/imagenes",
+    upload.fields([
+        { name : "fotoAntes", maxCount: 1 },
+        { name : "fotoDespues", maxCount: 1}
+    ]),
+    enviarImgServer
+);
 /*
  router.post("/informe/:id/enviar-email", 
    enviarInformePorEmail
