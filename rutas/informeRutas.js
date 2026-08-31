@@ -19,7 +19,7 @@ const { validarAuth } = require('../midlewares/validarAuth');
 
 router.get('/', informesGet);
 router.get('/:id', obtenerInformePorId);
-router.get('/pdf/informe/:id', generarPdfInforme);
+//router.get('/pdf/informe/:id', generarPdfInforme);
 
 
 
@@ -31,17 +31,16 @@ router.put('/', informesPut);
 
 
 router.post('/informe', crearInforme);
-router.post("/informe/:id/imagenes",
+
+router.post(
+    "/informe/:id/imagenes",
     upload.fields([
-        { name : "fotoAntes", maxCount: 1 },
-        { name : "fotoDespues", maxCount: 1}
+        { name: "fotoAntes", maxCount: 3 },
+        { name: "fotoDespues", maxCount: 3 }
     ]),
     enviarImgServer
 );
-/*
- router.post("/informe/:id/enviar-email", 
-   enviarInformePorEmail
-);
-*/
+ 
+
 
 module.exports = router;

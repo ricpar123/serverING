@@ -285,157 +285,64 @@ const informesDelete = async(req, res) => {
 
 
 const crearInforme = async (req, res) => {
-   console.log("datos", req.body);
+  
+  // console.log("datos", req.body);
     console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
-  try {
-   
-    const numero = await getNextInformeNumber();
-    console.log("nro de informe:", numero);
-    const { 
-      cliente, tecnicos, equipo, marca, modelo, nroSerie, motivoVisita, tipoTrabajo, presupuesto,
-      horaInicio, horaFin, fechaInicio, fechaFin, servicio, obs, recibido, firma, firmaT,
-      status, repuestos, fotosAntes, fotosDespues } = req.body;
-   
-   //subir fotos a Cloudinary
-   const resultados = [];
-   
-      if(fotosAntes.length === 0 && fotosDespues.length === 0) {
-         console.log("No hay fotos para subir");
-
-         return {
-            ok: false, 
-            hayFotos: false,
-            cantidad: 0,
-            resultados: []
-         };
-      } else {
-         return {
-            ok: true, 
-            hayFotos: true,
-            cantidad: resultados.length,
-            resultados
-         }
-      }
-
-
-    /*  
-    let urlAntes = [];
-      if(fotosAntes  && fotosAntes.length > 0) 
-    {
-      const promesasAntes = fotosAntes.slice(0,3).map(foto => subirACloudinary(foto));
-      urlAntes = await Promise.all(promesasAntes);
-      console.log("url Antes", urlAntes);
-    } 
-    //subir fotosDespues a Cloudinary
   
-    let urlDespues = [];
-      if(fotosDespues  && fotosDespues.length > 0) 
-    {
-      const promesasDespues = fotosDespues.slice(0,3).map(foto => subirACloudinary(foto));
-      urlDespues = await Promise.all(promesasDespues);
-      console.log("url Despues:", urlDespues);
-    }  
-   */
-
-    //Guardar Informe con el agregado de los links de las imagenes
-
-  
-    const nuevoInforme = new Informe ({
-      numero: numero,
-      cliente: cliente,
-      tecnicos: tecnicos,
-      equipo: equipo,
-      marca: marca,
-      modelo: modelo,
-      serie: nroSerie,
-      motivo: motivoVisita,
-      tipoTrabajo: tipoTrabajo,
-      presupuesto: presupuesto,
-      horaInicio: horaInicio,
-      horaFin: horaFin,
-      fechaInicio: fechaInicio,
-      fechaFin : fechaFin,
-      servicio: servicio,
-      obs: obs,
-      recibido: recibido,
-      firma: firma,
-      firmaT: firmaT,
-      status: status,
-      repuestos: repuestos,
-      fotosAntes: urlAntes,
-      fotosDespues: urlDespues
-      
-    });
-
-    const informeGuardado = await nuevoInforme.save();
-    const pdfBuffer = await generarPdfBuffer(informeGuardado);
-
-    let email1 = '';
-    let email2 = '';
-    let email3 = '';
-    let email4 = '';
-       
-
-    console.log('cliente: ', cliente);
-    let datosCliente = [];
-
+   try {
+   
+         const numero = await getNextInformeNumber();
+            console.log("nro de informe:", numero);
+         const { 
+            cliente, tecnicos, equipo, marca, modelo, nroSerie, motivoVisita, tipoTrabajo, presupuesto,
+            horaInicio, horaFin, fechaInicio, fechaFin, servicio, obs, recibido, firma, firmaT,
+            status, repuestos} = req.body;
+     
          
-      const clienteEncontrado = await Cliente.findOne({
-               nombre: informeGuardado.cliente});
+         const nuevoInforme = new Informe ({
+            numero: numero,
+            cliente: cliente,
+            tecnicos: tecnicos,
+            equipo: equipo,
+            marca: marca,
+            modelo: modelo,
+            serie: nroSerie,
+            motivo: motivoVisita,
+            tipoTrabajo: tipoTrabajo,
+            presupuesto: presupuesto,
+            horaInicio: horaInicio,
+            horaFin: horaFin,
+            fechaInicio: fechaInicio,
+            fechaFin : fechaFin,
+            servicio: servicio,
+            obs: obs,
+            recibido: recibido,
+            firma: firma,
+            firmaT: firmaT,
+            status: status,
+            repuestos: repuestos
+         });
 
-      const resultadoCorreo = await enviarCorreo({
-      informe: informeGuardado,
-      cliente: clienteEncontrado,
-      pdfBuffer, 
-      emailsAdicionales: []
-    
-        
-    });
-     
-   console.log("========== RESULTADO CORREO ==========");
-   console.log(resultadoCorreo);
-   console.log("=======================================");
+         const informeGuardado = await nuevoInforme.save();
+            console.log("Informe de Servicios guardado", informeGuardado);
+            
 
-    return res.status(201).json({
-      ok: true,
-      msg: "crearInforme V3 ejecutado",
-     
-      resultado: {
-        informeGuardado: true,
-        cloudinary: {
-          ok: true
-        },
-        pdf: {
-          ok: true
-        },
-        correo: {
-          ok: true,
-          correo: resultadoCorreo
-        },
-        informe: {
-          id: informeGuardado._id,
-          numero: informeGuardado.numero,
-          cliente: informeGuardado.cliente,
-        }
-  
-      }
-      
-    });
-    console.log(resultadoCorreo);
-  } catch (error) {
-    console.error("Error en crearInforme:", error);
-    return res.status(500).json({
-      ok: false,
-      msg: "Error en crearInforme",
-      error: error.message
-    });
-    
-  }
-      
-     
-};//fin crearInforme
+         return res.status(201).json({
+         ok: true,
+         resultado: {
+            informe: {
+               id: informeGuardado._id,
+               numero: informeGuardado.numero
+            }
+         }
+      });
 
-const generarPdfInforme = async (req, res) => {
+   } catch (error) {
+         console.log("Error en guardarInforme", error);
+      } 
+}
+ /*   
+ const generarPdfInforme = async (req, res) => {
    try {
       const { id } = req.params;
       console.log("generarPdfInforme id:", id);
@@ -470,7 +377,7 @@ const generarPdfInforme = async (req, res) => {
       });
    }
 };
-
+*/
 const enviarImgServer = async (req, res) => {
    try {
       const { id } = req.params;
@@ -545,6 +452,12 @@ const enviarImgServer = async (req, res) => {
 
         await informe.save();
 
+        console.log(
+            "Links guardados:",
+            informe.fotosAntes,
+            informe.fotosDespues
+        );
+
         return res.status(200).json({
             ok: true,
             msg: "Imagen subida correctamente",
@@ -561,7 +474,7 @@ const enviarImgServer = async (req, res) => {
         });
     }
 };
-   
+ 
 
  
     
@@ -569,8 +482,9 @@ module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
-   generarPdfInforme,
-   enviarImgServer,
+   enviarImgServer, 
    subirACloudinary
    
 }
+
+

@@ -25,12 +25,14 @@ const informeSch = new Schema({
     condicion: {type: String},
     status: {type : String },
     repuestos: {type : String },
-    fotosAntes: {type: [String], default: []},
-    fotosDespues: {type: [String], default: []},
-    rutaPdf: {
-        type: String,
-        default: ""
+    fotosAntes: {
+        type: [String],
+        default: []
     },
+    fotosDespues: {
+        type: [String],
+        default: []
+    }
 
 }, {
     timestamps: true
