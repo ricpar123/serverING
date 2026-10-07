@@ -1,12 +1,13 @@
-const puppeter = require('puppeteer');
+
 const { generarHtmlInforme } = require('../helpers/generarHtmlInforme');
 
 async function generarPdfBuffer(informe) {
 
     let browser;
+    const { default: puppeteer } = await import("puppeteer");
     
     try {
-        browser = await puppeter.launch({
+        browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });

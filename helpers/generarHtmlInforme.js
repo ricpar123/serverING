@@ -1,4 +1,16 @@
+
+
+
 function generarHtmlInforme(informe) {
+
+console.log("PDF fotosAntes:", informe.fotosAntes);
+console.log("PDF fotosDespues:", informe.fotosDespues); 
+console.log("Cantidad fotosAntes:",informe.fotosAntes?.length); 
+console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
+
+
+
+
    const logoBase64 = require("../helpers/logoBase64/logoBase64");
   
   return `
@@ -234,18 +246,18 @@ function generarHtmlInforme(informe) {
       </div>
     </div>
 
+    
     <div class="seccion">
-      <h3>Fotos Antes</h3>
-      <div class="fotos">
-        ${(informe.fotosAntes || []).map(url => `
-          "${url}">`).join("")}
-      </div>
-    </div>
+      <h3>Fotografias</h3>
 
-    <div class="seccion">
-      <h3>Fotos Después</h3>
+        
+      
       <div class="fotos">
-        ${(informe.fotosDespues || []).map(url => `"${url}">`).join("")}
+        ${(informe.fotosAntes || []).map((url, index) => `
+          <a href="${url}">Ver Foto Antes ${index + 1}</a>`).join("|")}
+
+        ${(informe.fotosDespues || []).map((url, index) => `
+          <a href="${url}">Ver Foto Despues ${index + 1}</a>`).join("|")}
       </div>
     </div>
 
@@ -267,8 +279,7 @@ function generarHtmlInforme(informe) {
 
     <div class="footer">
           <div class="footer-left">
-            <strong>Sistema desarrollado con</strong> ❤️ por <strong>freeSoft</strong>
-            @2026
+            <p><strong>Sistema desarrollado en</strong> <span class="bandera">🇵🇾</span><strong>por freeSoft @2026</strong</p>
           </div>
 
         <div class="footer-right">
@@ -276,10 +287,13 @@ function generarHtmlInforme(informe) {
         </div>
       </div>
     </div>
-
+        
+    
+  
+        
   </body>
   </html>
-  `; 
+ `  
 }
 
 module.exports = {generarHtmlInforme};

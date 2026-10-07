@@ -12,7 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zerobounce/zero-bounce-sdk": "^2.1.9",
     "body-parser": "^2.2.2",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
@@ -21,13 +20,12 @@
     "ejs": "^5.0.2",
     "express": "^4.17.1",
     "express-validator": "^6.10.1",
-    "jspdf": "^4.0.0",
+    "hunterio": "^1.0.0",
     "moment": "^2.29.3",
     "mongoose": "^6.0.12",
     "multer": "^2.1.1",
     "nodemailer": "^9.0.3",
-    "pdfkit": "^0.12.3",
-    "puppeteer": "^24.42.0",
+    "puppeteer": "^25.11.0",
     "streamifier": "^0.1.1"
   }
 }

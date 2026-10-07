@@ -1,82 +1,28 @@
-
-
-const nodemailer = require('nodemailer');
-
-const {
-  validarEmail
-} = require('./validarEmail');
-
-
-/*
- * Conviene crear el transporter una sola vez,
- * no cada vez que se envía un informe.
- */
-
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
-   
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    }
-    
-});
-
-
-
 // ============================================================
-// NORMALIZAR EMAILS
-// ============================================================
-
-function normalizarEmail(email) {
-
-    return String(email || "")
-        .trim()
-        .toLowerCase();
-        
-    }
-
-function normalizarEmails(emails) {
-    return [
-        ...new Set(
-            emails
-                .map(email => normalizarEmail(email))
-                .filter(email => email !== "")
-        )
-    ];
-}
-
-//=========================
 // ENVIAR CORREO
-//=========================
+// ============================================================
 
-async function enviarCorreo({ 
-  informe, 
-  cliente, 
-  pdfBuffer, 
-  emailsAdicionales = [] 
-}) 
+async function enviarCorreo({
+    informe,
+    cliente,
+    pdfBuffer,
+    emailsAdicionales = []
+}) {
 
-{
-
-  const emailsValidos = [];
-  const emailsInValidos = [];
-
-  // ========================================================
-  // 1. OBTENER EMAILS DEL CLIENTE
-  // ========================================================
+    const emailsValidos = [];
+    const emailsInValidos = [];
 
 
-  const emailsAValidar = normalizarEmails([
+    // ========================================================
+    // 1. OBTENER EMAILS DEL CLIENTE
+    // ========================================================
+
+    const emailsAValidar = normalizarEmails([
         cliente?.email1,
         cliente?.email2,
         cliente?.email3,
         cliente?.email4,
         ...emailsAdicionales
-        
     ]);
 
     console.log(
@@ -84,15 +30,15 @@ async function enviarCorreo({
         emailsAValidar
     );
 
+
     // ========================================================
-    // 2. VALIDAR CON Hunter.io API
+    // 2. VALIDAR EMAILS CON HUNTER.IO
     // ========================================================
-    
-   
-    for (const email of emailsAValidar){
+
+    for (const email of emailsAValidar) {
 
         try {
-            
+
             const resultado =
                 await validarEmail(email);
 
@@ -101,29 +47,34 @@ async function enviarCorreo({
                 resultado
             );
 
-        /*
+
+            /*
              * Según la respuesta real que obtuvimos
              * de Hunter:
              *
              * status: "valid"
-         */
-        
-        
-        if(resultado?.status === "valid") {
-            emailsValidos.push(email);
-        } else {
-         
-            emailsInValidos.push({
-                email,
-                estado: resultado?.status || "invalid",
-                motivo:
-                resultado?.motivo ||
-                "Correo no válido"    
-            });
-        
-        }
-            console.log("mailsValidos:", emailsValidos);
-            console.log("mails Invalidos:", emailsInValidos);
+             */
+
+            if (resultado?.status === "valid") {
+
+                emailsValidos.push(email);
+
+            } else {
+
+                emailsInValidos.push({
+                    email,
+
+                    estado:
+                        resultado?.status ||
+                        "invalid",
+
+                    motivo:
+                        resultado?.motivo ||
+                        "Correo no válido"
+                });
+            }
+
+
         } catch (error) {
 
             console.error(
@@ -131,36 +82,60 @@ async function enviarCorreo({
                 error
             );
 
-            
+            emailsInValidos.push({
+                email,
+                estado: "error_validacion",
+                motivo: error.message
+            });
         }
-    } //fin de validar amils
+    }
 
-    
-     
+
+    console.log(
+        "Emails válidos:",
+        emailsValidos
+    );
+
+    console.log(
+        "Emails inválidos:",
+        emailsInValidos
+    );
+
+
     // ========================================================
-    // 3. CORREO INTERNO INGROUP
+    // 3. CORREO INTERNO DE INGROUP
     // ========================================================
-    
+
     /*
      * INGROUP no se valida con Hunter.
      * Es una dirección conocida y controlada por nosotros.
-    */
+     */
 
     const emailIngroup =
         normalizarEmail(
             process.env.EMAIL_INGROUP
-
         );
-        
-            
+
+
     // ========================================================
-    // 4. CASO: NINGUN EMAIL VALIDO DEL CLIENTE
+    // 4. NINGÚN EMAIL VÁLIDO DEL CLIENTE
     // ========================================================
 
-    //Aunque el cliente no tenga direcciones validas,
-    //intentamos enviar una copia interna a INGroup
+    /*
+     * Regla de negocio:
+     *
+     * Si ningún correo del cliente es válido:
+     *
+     * - NO enviamos al cliente.
+     * - Enviamos solamente a INGROUP.
+     * - Devolvemos estado "falla".
+     */
 
-    if(emailsValidos.length === 0) {
+    if (emailsValidos.length === 0) {
+
+        // --------------------------------------------
+        // Comprobar que exista el correo de INGROUP
+        // --------------------------------------------
 
         if (!emailIngroup) {
 
@@ -180,77 +155,127 @@ async function enviarCorreo({
 
                 copiaIngroupEnviada: false,
 
-                
+                messageId: null
             };
         }
-        
-// Se envian los correos a INGROUP aunque no existan correos validos del cliente.
+
+
         try {
-            const info = await transporter.sendMail({
-            from: `"INGROUP Servicios" <${process.env.SMTP_FROM}>`, 
-            
-            to: emailIngroup,
 
-                subject: `Informe de Servicio Nro - ${informe.numero}`,
+            const info =
+                await transporter.sendMail({
 
-                html: `<p>
-                Estimado cliente,</p>
-                <p>
-                Adjuntamos  el informe de servicio 
-                <strong> Nro - ${informe.numero}</strong><br>
-                <p>No se encontraron emails validos del cliente</p>
-                <p>
-                <strong>Sistema desarrollado en Paraguay 🇵🇾 por free@Soft</strong>
-                </p>
-                `,
+                    from:
+                        `"INGROUP Servicios" <${process.env.SMTP_FROM}>`,
 
-                attachments: [
-                    {
-                        filename: `Informe_${informe.numero}.pdf`,
-                        content: pdfBuffer,
-                        contentType: 'application/pdf'
-                    }
-                ],
-                
-            
-                
-          }); 
+                    to:
+                        emailIngroup,
+
+                    subject:
+                        `Informe de Servicio Nro - ${informe.numero}`,
+
+                    html: `
+                        <p>
+                            Informe de Servicio
+                            <strong>
+                                Nro - ${informe.numero}
+                            </strong>
+                        </p>
+
+                        <p>
+                            No se encontraron direcciones
+                            de correo válidas del cliente.
+                        </p>
+
+                        <p>
+                            El informe se adjunta como
+                            copia interna de INGROUP.
+                        </p>
+
+                        <p>
+                            <strong>
+                                Sistema desarrollado en Paraguay 🇵🇾
+                                por free@Soft
+                            </strong>
+                        </p>
+                    `,
+
+                    attachments: [
+                        {
+                            filename:
+                                `Informe_${informe.numero}.pdf`,
+
+                            content:
+                                pdfBuffer,
+
+                            contentType:
+                                "application/pdf"
+                        }
+                    ]
+                });
+
+
             console.log(
                 "Copia enviada a INGROUP:",
                 info.messageId
             );
 
-          return {
-                enviado:false,
+
+            return {
+                estado: "falla",
+
+                /*
+                 * "enviado" significa enviado
+                 * al CLIENTE.
+                 */
+
+                enviado: false,
 
                 mensaje:
-                    "No se encontraron direcciones válidas del cliente. El informe fue enviado solo a INGroup",
-               
-            };
-            
-        } catch (errorMail) {
-            console.error(
-                "Error enviando copia a INGroup:",
-                    errorMail
-                );
+                    "No existen correos válidos del cliente. El informe fue enviado únicamente a INGROUP.",
 
-        return {
+                emailsValidos,
+                emailsInValidos,
+
+                copiaIngroupEnviada: true,
+
+                messageId:
+                    info.messageId
+            };
+
+
+        } catch (errorMail) {
+
+            console.error(
+                "Error enviando copia a INGROUP:",
+                errorMail
+            );
+
+
+            return {
                 estado: "falla",
                 enviado: false,
 
                 mensaje:
                     "No existen correos válidos del cliente y tampoco fue posible enviar la copia a INGROUP.",
 
-                
+                emailsValidos,
+                emailsInValidos,
+
+                copiaIngroupEnviada: false,
+
+                messageId: null,
+
+                detalleTecnico:
+                    errorMail.message
             };
-            
         }
-    } //fin de if(emailsValidos.length === 0)
+    }
+
 
     // ========================================================
-    // 5.     EXISTEN EMAILS VÁLIDOS
+    // 5. EXISTEN EMAILS VÁLIDOS
     // ========================================================
-
 
     /*
      * A partir de acá sabemos que:
@@ -258,66 +283,73 @@ async function enviarCorreo({
      * emailsValidos.length > 0
      *
      * Agregamos también la copia para INGROUP.
-    */
+     */
 
-const destinatariosFinales =
-    normalizarEmails([
-        ...emailsValidos,
-        emailIngroup
-    ]);
-
-console.log(
-    "Destinatarios finales:",
-    destinatariosFinales
-);
+    const destinatariosFinales =
+        normalizarEmails([
+            ...emailsValidos,
+            emailIngroup
+        ]);
 
 
-// ========================================================
-// 6. ENVIAR CORREO CON NODE MAILER
-// ========================================================
+    console.log(
+        "Destinatarios finales:",
+        destinatariosFinales
+    );
 
-try {
 
-    const info = await transporter.sendMail({
+    // ========================================================
+    // 6. ENVÍO REAL CON NODEMAILER
+    // ========================================================
 
-        from:
-            `"INGROUP Servicios" <${process.env.SMTP_FROM}>`,
+    try {
 
-        to:
-            destinatariosFinales,
+        const info =
+            await transporter.sendMail({
 
-        subject:
-            `Informe de Servicio Nro - ${informe.numero}`,
+                from:
+                    `"INGROUP Servicios" <${process.env.SMTP_FROM}>`,
 
-        html: `
-            <p>Estimado cliente,</p>
+                to:
+                    destinatariosFinales,
 
-            <p>
-                Adjuntamos el informe de servicio
-                <strong>Nro - ${informe.numero}</strong>
-            </p>
+                subject:
+                    `Informe de Servicio Nro - ${informe.numero}`,
 
-            <p>
-                <strong>
-                    Sistema desarrollado en Paraguay 🇵🇾
-                    por free@Soft
-                </strong>
-            </p>
-        `,
+                html: `
+                    <p>
+                        Estimado cliente,
+                    </p>
 
-        attachments: [
-            {
-                filename:
-                    `Informe_${informe.numero}.pdf`,
+                    <p>
+                        Adjuntamos el informe de servicio
+                        <strong>
+                            Nro - ${informe.numero}
+                        </strong>.
+                    </p>
 
-                content:
-                    pdfBuffer,
+                    <p>
+                        <strong>
+                            Sistema desarrollado en Paraguay 🇵🇾
+                            por free@Soft
+                        </strong>
+                    </p>
+                `,
 
-                contentType:
-                    "application/pdf"
-            }
-        ]
-    });
+                attachments: [
+                    {
+                        filename:
+                            `Informe_${informe.numero}.pdf`,
+
+                        content:
+                            pdfBuffer,
+
+                        contentType:
+                            "application/pdf"
+                    }
+                ]
+            });
+
 
         // ====================================================
         // 7. RESULTADO SMTP
@@ -334,6 +366,7 @@ try {
                 info.rejected || []
             );
 
+
         console.log(
             "Aceptados SMTP:",
             aceptadosSmtp
@@ -343,6 +376,7 @@ try {
             "Rechazados SMTP:",
             rechazadosSmtp
         );
+
 
         // ====================================================
         // 8. RESULTADO ESPECÍFICO DEL CLIENTE
@@ -355,7 +389,7 @@ try {
             );
 
 
-        const emailsRechazadosSmtpCliente =
+        const emailsClienteRechazados =
             emailsValidos.filter(
                 email =>
                     rechazadosSmtp.includes(email)
@@ -375,7 +409,7 @@ try {
 
         console.log(
             "Emails cliente rechazados:",
-            emailsRechazadosSmtpCliente
+            emailsClienteRechazados
         );
 
         console.log(
@@ -383,7 +417,8 @@ try {
             copiaIngroupEnviada
         );
 
-         // ====================================================
+
+        // ====================================================
         // 9. SMTP NO ACEPTÓ NINGÚN EMAIL DEL CLIENTE
         // ====================================================
 
@@ -393,6 +428,8 @@ try {
 
             return {
                 estado: "falla",
+                enviado: false,
+
                 mensaje:
                     "No fue posible enviar el informe a ninguna dirección del cliente.",
 
@@ -400,7 +437,7 @@ try {
                 emailsInValidos,
 
                 emailsClienteAceptados,
-                emailsRechazadosSmtpCliente,
+                emailsClienteRechazados,
 
                 aceptadosSmtp,
                 rechazadosSmtp,
@@ -411,6 +448,7 @@ try {
                     info.messageId
             };
         }
+
 
         // ====================================================
         // 10. ENVÍO PARCIAL
@@ -429,7 +467,7 @@ try {
 
         if (
             emailsInValidos.length > 0 ||
-            emailsRechazadosSmtpCliente.length > 0
+            emailsClienteRechazados.length > 0
         ) {
 
             return {
@@ -443,7 +481,7 @@ try {
                 emailsInValidos,
 
                 emailsClienteAceptados,
-                emailsRechazadosSmtpCliente,
+                emailsClienteRechazados,
 
                 aceptadosSmtp,
                 rechazadosSmtp,
@@ -455,10 +493,10 @@ try {
             };
         }
 
-        
-            // ====================================================
-            // 11. ÉXITO
-            // ====================================================
+
+        // ====================================================
+        // 11. ÉXITO
+        // ====================================================
 
         return {
             estado: "exito",
@@ -468,12 +506,13 @@ try {
                 "Informe enviado correctamente.",
 
             emailsValidos,
-            
+            emailsInValidos,
+
             emailsClienteAceptados,
-            
+            emailsClienteRechazados,
 
             aceptadosSmtp,
-            
+            rechazadosSmtp,
 
             copiaIngroupEnviada,
 
@@ -494,7 +533,10 @@ try {
         );
 
 
-        
+        let motivo =
+            "No fue posible enviar el informe por correo.";
+
+
         if (errorMail.code === "EAUTH") {
 
             motivo =
@@ -528,7 +570,7 @@ try {
             emailsInValidos,
 
             emailsClienteAceptados: [],
-            emailsRechazadosSmtpCliente: [],
+            emailsClienteRechazados: [],
 
             aceptadosSmtp: [],
             rechazadosSmtp: [],
@@ -542,13 +584,4 @@ try {
         };
 
     }
-} // FIN enviarCorreo()  
-    
-    
-
-module.exports = {
-    enviarCorreo
-}
-
-
-
+} // FIN enviarCorreo()

@@ -21,6 +21,7 @@ const API_BASE = process.env.API_BASE;
 
 const { generarPdfBuffer } = require('../helpers/generarPdfBuffer.js');
 
+
 const fs = require('fs');
 
 const nodemailer = require("nodemailer");
@@ -28,10 +29,12 @@ const nodemailer = require("nodemailer");
 
 const path = require('path');
 const logoBase64 = require("../helpers/logoBase64/logoBase64");
-const puppeteer  = require('puppeteer');
+
 const { enviarCorreo } = require('../helpers/enviarCorreo.js');
 
 require('dotenv').config();
+const {validarListaDeEmails} = require('../helpers/validator.js');
+const { validarEmail } = require('../helpers/validarEmail.js');
 
 
 let number = 0;
@@ -286,28 +289,31 @@ const informesDelete = async(req, res) => {
 
 const crearInforme = async (req, res) => {
   
-  // console.log("datos", req.body);
-    console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
+   console.log("🔥🔥🔥 CREAR INFORME NUEVO V3 🔥🔥🔥");
   
    try {
    
          const numero = await getNextInformeNumber();
             console.log("nro de informe:", numero);
          const { 
-            cliente, tecnicos, equipo, marca, modelo, nroSerie, motivoVisita, tipoTrabajo, presupuesto,
+            cliente, tecnicos, equipo, marca, modelo, serie, motivo, tipoTrabajo, presupuesto,
             horaInicio, horaFin, fechaInicio, fechaFin, servicio, obs, recibido, firma, firmaT,
             status, repuestos} = req.body;
-     
-         
-         const nuevoInforme = new Informe ({
+
+         //obtener y sgregsr links de imagenes al payload
+
+         let utlAntes = [];
+         let urlDespues = [];
+
+        const nuevoInforme = new Informe ({
             numero: numero,
             cliente: cliente,
             tecnicos: tecnicos,
             equipo: equipo,
             marca: marca,
             modelo: modelo,
-            serie: nroSerie,
-            motivo: motivoVisita,
+            serie: serie,
+            motivo: motivo,
             tipoTrabajo: tipoTrabajo,
             presupuesto: presupuesto,
             horaInicio: horaInicio,
@@ -322,106 +328,73 @@ const crearInforme = async (req, res) => {
             status: status,
             repuestos: repuestos
          });
-
+        
          const informeGuardado = await nuevoInforme.save();
-            console.log("Informe de Servicios guardado", informeGuardado);
+         console.log("Informe creado con éxito:", informeGuardado._id, informeGuardado.numero);
+            return res.status(201).json({
+               ok: true,
+               resultado: {
+                  informe: {
+                     id: informeGuardado._id,
+                     numero: informeGuardado.numero
+                  }
+               }
+            });
             
-
-         return res.status(201).json({
-         ok: true,
-         resultado: {
-            informe: {
-               id: informeGuardado._id,
-               numero: informeGuardado.numero
-            }
-         }
-      });
-
+      
    } catch (error) {
          console.log("Error en guardarInforme", error);
       } 
-}
- /*   
- const generarPdfInforme = async (req, res) => {
-   try {
-      const { id } = req.params;
-      console.log("generarPdfInforme id:", id);
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-         return res.status(400).json({
-            ok: false,
-            error: "ID inválido"
-         });
-      }
-
-      const informe = await Informe.findById(id).lean();
-
-      if (!informe) {
-         return res.status(404).json({
-            ok: false,
-            error: "Informe no encontrado"
-         });
-      }
-
-      const pdfBuffer = await generarPdfBuffer(informe);
       
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename=informe_${informe.numero}.pdf`);
-      res.send(pdfBuffer); 
+} //Fin crearInforme
 
-   } catch (error) {
-      console.error("Error en generarPdfInforme:", error);
-      return res.status(500).json({
-         ok: false,
-         error: error.message
-      });
-   }
-};
-*/
-const enviarImgServer = async (req, res) => {
-   try {
-      const { id } = req.params;
-      console.log("ID informe:", id);
-      console.log("FILES:", req.files);
+//Ya tenemos el informe, ahora vamos a subir la imagen a cloudinary y guardar el link en el informe
 
-        if (!id) {
-            return res.status(400).json({
-                ok: false,
-                msg: "No se recibió el ID del informe"
-            });
-        }
-        const informe = await Informe.findById(id);
+ const enviarImgServer = async (req, res) => {
+      try {
+         const { id } = req.params;
+         console.log("ID informe:", id);
+         console.log("FILES:", req.files);
 
-        if (!informe) {
-            return res.status(404).json({
-                ok: false,
-                msg: "Informe no encontrado"
-            });
-        }
+         if (!id) {
+               return res.status(400).json({
+                  ok: false,
+                  msg: "No se recibió el ID del informe"
+               });
+         }
+         const informe = await Informe.findById(id);
 
-        let archivo;
-        let tipo;
+         if (!informe) {
+               return res.status(404).json({
+                  ok: false,
+                  msg: "Informe no encontrado"
+               });
+         }
+         
+         let archivo;
+         let tipo;
 
-        if (req.files?.fotoAntes?.length) {
-            archivo = req.files.fotoAntes[0];
-            tipo = "fotoAntes";
-        }
+         if (req.files?.fotoAntes?.length) {
+               archivo = req.files.fotoAntes[0];
+               tipo = "fotoAntes";
+         }
 
-        if (req.files?.fotoDespues?.length) {
+         if (req.files?.fotoDespues?.length) {
             archivo = req.files.fotoDespues[0];
             tipo = "fotoDespues";
-        }
+         }
 
-        if (!archivo) {
+         if (!archivo) {
             return res.status(400).json({
                 ok: false,
                 msg: "No se recibió ninguna imagen"
             });
-        }
+         }
 
-        console.log("Tipo:", tipo);
-        console.log("Archivo:", archivo.originalname);
-        console.log("Tamaño:", archivo.size);
+            console.log("Tipo:", tipo);
+            console.log("Archivo:", archivo.originalname);
+            console.log("Tamaño:", archivo.size);
 
         // Convertimos el Buffer que recibe Multer
         // a Base64 porque subirACloudinary() trabaja con Base64.
@@ -440,51 +413,330 @@ const enviarImgServer = async (req, res) => {
             }
 
             informe.fotosAntes.push(link);
+            console.log("linkFotosAntes:", link);
 
-        } else {
+         } else {
 
             if (!Array.isArray(informe.fotosDespues)) {
                 informe.fotosDespues = [];
             }
 
             informe.fotosDespues.push(link);
-        }
+            console.log("linkFotosDespues:", link);;
+         }
 
-        await informe.save();
+         await informe.save();
+
+         console.log(
+               "Links guardados:",
+               informe.fotosAntes,
+               informe.fotosDespues,
+               link
+         );
+        
+
+            return res.status(200).json({
+               ok: true,
+               msg: "Imagenes guardadas correctamente en Cloudinary y en el informe",
+               tipo,
+               link
+            });
+      } catch (error) {
+            console.error("Error en enviarImgServer:", error);
+
+            return res.status(500).json({
+                  ok: false,
+                  msg: "Error al subir la imagen",
+                  error: error.message
+            });
+         }
+   };
+
+   const generarPdfInforme = async (req, res) => {
+      try {
+         const { id } = req.params;
+         console.log("generarPdfInforme id:", id);
+
+         if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+               ok: false,
+               error: "ID inválido"
+            });
+         }
+
+         const informe = await Informe.findById(id).lean();
+
+         if (!informe) {
+            return res.status(404).json({
+               ok: false,
+               error: "Informe no encontrado"
+            });
+         }
+         
+         console.log("Fotos antes para pdf:", informe.fotosAntes);
+         console.log("Fotos despues para pdf:", informe.fotosDespues);
+
+         const pdfBuffer = await generarPdfBuffer(informe);
+      
+         res.setHeader('Content-Type', 'application/pdf');
+         res.setHeader('Content-Disposition', `inline; filename=informe_${informe.numero}.pdf`);
+         
+         return res.send(pdfBuffer); 
+
+      } catch (error) {
+            console.error("Error en generarPdfInforme:", error);
+            return res.status(500).json({
+               ok: false,
+               error: error.message
+            });
+         }
+   };
+
+  
+
+   const prepararEnvioDeCorreo = async (req, res) => {
+      try {
+         const { id } = req.params;
+         console.log("prepararEnvioDeCorreo id:", id);
+
+         // ==========================================
+         // 1. VALIDAR ID
+         // ==========================================
+
+         if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+               ok: false,
+
+                error:
+                    "ID inválido de Mongoose."
+            });
+            
+         }
+
+         // ==========================================
+         // 2. BUSCAR INFORME DEFINITIVO
+         // ==========================================
+
+         const informe = await Informe.findById(id).lean(); //ya tengo informe
+
+         if (!informe) {
+            return res.status(404).json({
+                ok: false,
+
+                resultado: {
+                    OK: false,
+                    error:
+                    "Informe no encontrado."
+                },
+
+                
+            });
+         }
+               console.log(
+                  "Informe encontrado:",
+                  informe.numero
+               );
+         
+
+        // ==========================================
+        // 3. OBTENER CLIENTE
+        // ==========================================
+
+        /*
+         * informe.cliente contiene solamente
+         * el nombre del cliente.
+         *
+         * Ajustá "nombre" si en tu modelo Cliente
+         * el campo se llama de otra manera.
+         */
+                 
+         const cliente = await Cliente.findOne({
+            nombre : informe.cliente
+         }).lean();
+
+         if(!cliente) {
+            return res.status(404).json({
+                ok: false,
+                
+                error: "Cliente no encontrado."
+
+            });
+         }
+
+         console.log("Cliente encontrado:", cliente.nombre);
+
+
+         
+
+            // ==========================================
+            // 4. GENERAR PDF
+            // ==========================================
+
+            let pdfInforme;
+
+            try {
+               pdfInforme = await generarPdfBuffer(informe); // ya tengo pdf
+            } catch (errorPDF) {
+               console.error("Error generando PDF:", errorPDF);
+               return res.status(500).json({
+                  ok:false,
+                  error:"No fue posible generar el PDF del informe",
+                
+               });
+            } 
+
+            // =====================================================
+            // 5. VALIDAR PDF
+            // =====================================================
+
+         if (!pdfInforme  || !Buffer.isBuffer(pdfInforme) || pdfInforme.length === 0) {
+
+            console.error("PDF invalido o vacio");
+
+            return res.status(500).json({
+               ok: false,
+               resultado:"No fue posible generar el PDF drl informe."
+            });
+
+            
+         }
+               console.log("PDF generado corectamente");
+               console.log("Tamaño del PDF:", pdfInforme.length);
+
+        // =====================================================
+        // 6. ENVIAR CORREO
+        // =====================================================
+
+        const resultadoCorreo =
+            await enviarCorreo({
+
+                informe,
+
+                cliente,
+
+                pdfBuffer:
+                    pdfInforme,
+
+                emailsAdicionales:
+                    []
+            });
+
 
         console.log(
-            "Links guardados:",
-            informe.fotosAntes,
-            informe.fotosDespues
+            "Resultado del correo:",
+            resultadoCorreo
         );
 
+
+        // =====================================================
+        // 7. RESPUESTA FINAL AL FRONTEND
+        //  Se comtenplan tres tipos de resultados: Exito, Parcial y Error.    
+        // =====================================================
+
+        
         return res.status(200).json({
+
             ok: true,
-            msg: "Imagen subida correctamente",
-            tipo,
-            link
+
+            resultado: {
+
+                pdf: {
+                    ok: true
+                },
+
+                correo: {
+
+                    estado:
+                        resultadoCorreo.estado,
+
+                    enviado:
+                        resultadoCorreo.enviado,
+
+                    mensaje:
+                        resultadoCorreo.mensaje,
+
+                    emailsValidos:
+                        resultadoCorreo.emailsValidos || [],
+
+                    emailsInValidos:
+                        resultadoCorreo.emailsInValidos || [],
+
+                    emailsClienteAceptados:
+                        resultadoCorreo.emailsClienteAceptados || [],
+
+                    emailsClienteRechazados:
+                        resultadoCorreo.emailsRechazadosSmtpCliente || [],
+
+                    aceptadosSmtp:
+                        resultadoCorreo.aceptadosSmtp || [],
+
+                    rechazadosSmtp:
+                        resultadoCorreo.rechazadosSmtp || [],
+
+                    copiaIngroupEnviada:
+                        resultadoCorreo.copiaIngroupEnviada || false,
+
+                    messageId:
+                        resultadoCorreo.messageId || null
+                },
+
+                informe: {
+
+                    id:
+                        informe._id,
+
+                    numero:
+                        informe.numero,
+
+                    cliente:
+                        informe.cliente
+                }
+            }
         });
-   } catch (error) {
-      console.error("Error en enviarImgServer:", error);
+
+
+    } catch (err) {
+
+        console.error(
+            "Error en generarEnvioDeCorreo:",
+            err
+        );
+
+
+        // =====================================================
+        // 8. ERROR GENERAL DEL CONTROLLER
+        // =====================================================
 
         return res.status(500).json({
+
             ok: false,
-            msg: "Error al subir la imagen",
-            error: error.message
+
+            resultado: {
+
+                pdf: {
+                    ok: false
+                },
+
+                correo:
+                    null
+            },
+
+            error:
+                "Error al finalizar el informe.",
+
+            detalle:
+                err.message
         });
     }
 };
- 
 
- 
-    
+   
 module.exports = {
    informesGet, crearInforme,
    informesGetDatos, informesDelete,
    informesPut, obtenerInformePorId,
-   enviarImgServer, 
-   subirACloudinary
+   enviarImgServer, generarPdfInforme,
+   subirACloudinary, prepararEnvioDeCorreo
    
 }
-
 
