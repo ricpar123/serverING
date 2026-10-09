@@ -165,7 +165,7 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
         width: 100%;
         text-align: center;
         font-size: 9px;
-        color: #777;
+        color: #222;
       }
 
       .footer strong {
@@ -307,7 +307,7 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
             >
             <span>
             Sistema desarrollado en Paraguay por
-            </strong>freeSoft &copy; 2026<strong>
+            <strong>freeSoft &copy; 2026</strong>
             </span>
           </div>
 
