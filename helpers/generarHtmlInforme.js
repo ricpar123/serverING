@@ -4,15 +4,25 @@
 function generarHtmlInforme(informe) {
 
 console.log("PDF fotosAntes:", informe.fotosAntes);
-console.log("PDF fotosDespues:", informe.fotosDespues); 
-console.log("Cantidad fotosAntes:",informe.fotosAntes?.length); 
+console.log("PDF fotosDespues:", informe.fotosDespues);
+console.log("Cantidad fotosAntes:",informe.fotosAntes?.length);
 console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
 
 
 
 
    const logoBase64 = require("../helpers/logoBase64/logoBase64");
-  
+   const fs = require("fs");
+   const path = require("path");
+
+   const rutaBandera = path.join(
+   __dirname,
+   "../assets/banderaParaguay.png");
+
+   const banderaBase64 =
+    "data:image/png;base64," +
+    fs.readFileSync(rutaBandera).toString("base64");
+
   return `
   <!DOCTYPE html>
   <html lang="es">
@@ -70,7 +80,7 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
         color: #222;
       }
 
-      
+
       .seccion {
         margin-top: 15px;
         border-top: 1px solid #ccc;
@@ -161,14 +171,25 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
       .footer strong {
         color: #0d6efd;
       }
-      
-      .footer-left strong {
-        color: #0d6efd;
+
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 7px;
       }
 
-      .heart {
-        color: red;
+      .bandera-paraguay {
+        width: 24px;
+        height: auto;
+        object-fit: contain;
       }
+
+      .footer-right {
+        color: #777;
+        white-space: nowrap;
+      }
+
+
 
     </style>
   </head>
@@ -194,7 +215,7 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
       </div>
     </div>
 
-      
+
 
     <div class="seccion">
       <h3>Datos Generales</h3>
@@ -246,12 +267,12 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
       </div>
     </div>
 
-    
+
     <div class="seccion">
       <h3>Fotografias</h3>
 
-        
-      
+
+
       <div class="fotos">
         ${(informe.fotosAntes || []).map((url, index) => `
           <a href="${url}">Ver Foto Antes ${index + 1}</a>`).join("|")}
@@ -279,21 +300,29 @@ console.log("Cantidad fotos Despues:",informe.fotosDespues?.length);
 
     <div class="footer">
           <div class="footer-left">
-            <p><strong>Sistema desarrollado en</strong> <span class="bandera">🇵🇾</span><strong>por freeSoft @2026</strong</p>
+            <img
+                src="${banderaBase64}"
+                alt="Bandera del Paraguay"
+                class="bandera-paraguay"
+            >
+            <span>
+            Sistema desarrollado en Paraguay por
+            </strong>freeSoft &copy; 2026<strong>
+            </span>
           </div>
 
         <div class="footer-right">
-            Pagina <span class="pageNumber"></span>
+            freeosoft.com
         </div>
       </div>
     </div>
-        
-    
-  
-        
+
+
+
+
   </body>
   </html>
- `  
+ `
 }
 
 module.exports = {generarHtmlInforme};
